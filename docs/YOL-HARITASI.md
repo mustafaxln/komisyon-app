@@ -232,9 +232,9 @@ admins (basit)
 5. İsteğe bağlı: oran “kaynak notu” alanı
 
 **Günün sonu checklist**
-- [ ] `docker compose up --build` ile her şey ayağa kalkıyor
-- [ ] Admin preset oranı güncelliyor → yeni hesaplarda varsayılan bu oran
-- [ ] Kullanıcı formda oranı / komisyon KDV’yi override edebiliyor
+- [x] `docker compose up --build` ile her şey ayağa kalkıyor
+- [x] Admin preset oranı güncelliyor → yeni hesaplarda varsayılan bu oran
+- [x] Kullanıcı formda oranı / komisyon KDV’yi override edebiliyor
 
 ---
 
@@ -252,9 +252,10 @@ admins (basit)
 5. Son smoke test + küçük bug fix
 
 **Günün sonu checklist**
-- [ ] Repo public/private istenen şekilde hazır
-- [ ] README ile sıfırdan ayağa kalkılıyor
-- [ ] Sunum dosyası paylaşılmaya hazır
+- [x] README ile sıfırdan ayağa kalkılıyor (Docker)
+- [x] Teknik doküman hazır (`docs/TEKNIK-DOKUMAN.md`)
+- [x] Sunum iskeleti hazır (`docs/SUNUM.md` — screenshot’ları sen ekle)
+- [ ] Repo push (sen yapacaksın)
 
 ---
 
@@ -264,17 +265,17 @@ admins (basit)
 |--------|--------|
 | Komisyon formu | ✅ |
 | Pazaryeri + kategori | ✅ |
-| Oran tanımlama / admin | ⏳ Gün 4 |
+| Oran tanımlama / admin | ✅ |
 | Net kâr | ✅ |
 | Kâr marjı | ✅ |
 | Başabaş fiyat | ✅ |
 | Karşılaştırma tablosu | ✅ |
 | Hesaplama geçmişi | ✅ |
-| Docker Compose | ⏳ DB var; FE+BE paketi Gün 4 |
-| README | ✅ (temel) |
-| Teknik doküman | ⏳ Gün 5 |
-| GitHub | ⏳ Gün 5 |
-| Ürün sunumu (screenshot) | ⏳ Gün 5 |
+| Docker Compose | ✅ (db + api + web) |
+| README | ✅ |
+| Teknik doküman | ✅ |
+| GitHub | ⏳ push sende |
+| Ürün sunumu (screenshot) | ⏳ iskelet hazır, görselleri ekle |
 
 ---
 

@@ -8,6 +8,7 @@ const categoriesRouter = require('./routes/categories');
 const ratesRouter = require('./routes/rates');
 const calculateRouter = require('./routes/calculate');
 const calculationsRouter = require('./routes/calculations');
+const adminRouter = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +40,7 @@ app.use('/api/categories', categoriesRouter);
 app.use('/api/rates', ratesRouter);
 app.use('/api/calculate', calculateRouter);
 app.use('/api/calculations', calculationsRouter);
+app.use('/api/admin', adminRouter);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

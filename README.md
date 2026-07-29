@@ -1,59 +1,91 @@
 # Pazaryeri Komisyon ve Kârlılık Hesaplayıcı
 
-E-ticaret satıcıları için pazaryeri komisyon, kargo, KDV ve diğer giderleri hesaba katarak net kâr, kâr marjı ve başabaş fiyat hesaplayan web uygulaması.
+E-ticaret satıcılarının Trendyol, Hepsiburada, Amazon, Etsy ve Shopify için komisyon, kargo, KDV ve diğer giderleri hesaba katarak **net kâr**, **kâr marjı** ve **başabaş fiyat** hesapladığı web uygulaması.
 
-## Durum
+## Tek komutla çalıştır (Docker — önerilen teslim yolu)
 
-**Gün 1–3 tamam:** İskelet + hesaplama API + çalışan hesaplayıcı arayüzü (form, karşılaştırma, geçmiş).
+Önkoşul: [Docker Desktop](https://www.docker.com/products/docker-desktop/) kurulu olsun.
+
+```bash
+docker compose up --build
+```
+
+| Servis | Adres |
+|--------|--------|
+| Web arayüz (+ API proxy) | http://localhost:3000 |
+| API health (web üzerinden) | http://localhost:3000/api/health |
+| PostgreSQL | localhost:5432 |
+
+**Admin:** http://localhost:3000/admin  
+E-posta: `admin@komisyon.local` · Şifre: `admin123`  
+(Ana hesaplayıcıda Admin sekmesi yoktur; adres elle yazılır.)
+
+İlk açılışta tablolar + seed + admin otomatik oluşur. Seed’i sıfırdan yenilemek için:
+
+```bash
+RUN_DB_INIT=force docker compose up --build
+```
+
+Durdurmak:
+
+```bash
+docker compose down
+```
+
+## Yerel geliştirme (Docker sadece DB)
+
+```bash
+docker compose up -d db
+cd backend && cp .env.example .env && npm install && npm run db:init && npm run dev
+cd frontend && npm install && npm run dev
+```
+
+- Frontend: http://127.0.0.1:5173  
+- API: http://localhost:3001  
+
+## Özellikler
+
+- Pazaryeri + kategori seçimi, otomatik komisyon oranı
+- Oran ve komisyon KDV manuel override
+- Net kâr, kâr marjı, başabaş fiyat
+- Pazaryeri karşılaştırma tablosu
+- Hesaplama geçmişi
+- Admin ile komisyon preset güncelleme / ekleme / silme
+- Docker Compose ile tek komut deploy
 
 ## Teknoloji
 
-- Frontend: React (Vite)
-- Backend: Node.js / Express
-- Database: PostgreSQL
-- Deployment: Docker Compose (şu an DB; tam paket Gün 4)
-
-## Hızlı başlangıç
-
-```bash
-# 1) Veritabanı
-docker compose up -d
-
-# 2) Tablolar + seed (ilk kurulum / sıfırlama)
-cd backend && npm run db:init && cd ..
-
-# 3) API
-cd backend && npm run dev
-
-# 4) Frontend (ayrı terminal)
-cd frontend && npm run dev
-```
-
-- Site: http://127.0.0.1:5173  
-- API: http://localhost:3001/api/health  
-
-## Ne yapabilirsin?
-
-1. Pazaryeri + kategori seç → komisyon oranı otomatik dolar  
-2. Oranı ve komisyon KDV’yi elle değiştir  
-3. Satış / maliyet / kargo gir → net kâr, marj, başabaş gör  
-4. Birden fazla pazaryeriyle karşılaştır  
-5. Sonucu geçmişe kaydet  
+| Katman | Seçim |
+|--------|--------|
+| Frontend | React (Vite) + Nginx (prod) |
+| Backend | Node.js / Express |
+| DB | PostgreSQL 16 |
+| Auth (admin) | JWT + bcrypt |
+| Deploy | Docker Compose |
 
 ## Dokümanlar
 
-| Dosya | Açıklama |
-|-------|----------|
+| Dosya | İçerik |
+|-------|--------|
+| [docs/TEKNIK-DOKUMAN.md](./docs/TEKNIK-DOKUMAN.md) | Mimari, API, formüller, Docker |
 | [docs/PM-MESAJI.md](./docs/PM-MESAJI.md) | PM kapsam mesajı |
 | [docs/YOL-HARITASI.md](./docs/YOL-HARITASI.md) | 5 günlük plan |
-| [docs/OGRENME-DEFTERI.md](./docs/OGRENME-DEFTERI.md) | Docker / DB / genel ders notları |
-| [docs/BACKEND-OGRENME.md](./docs/BACKEND-OGRENME.md) | Backend satır satır öğrenme (routes, services, index) |
+| [docs/OGRENME-DEFTERI.md](./docs/OGRENME-DEFTERI.md) | Genel öğrenme notları |
+| [docs/BACKEND-OGRENME.md](./docs/BACKEND-OGRENME.md) | Backend satır satır |
+| [docs/SUNUM.md](./docs/SUNUM.md) | Ürün sunumu (screenshot odaklı) |
 
 ## Klasör yapısı
 
 ```
-frontend/   React arayüz (hesapla / karşılaştır / geçmiş)
-backend/    Express API + hesaplama motoru + SQL
-docs/       Plan ve ders notları
-docker-compose.yml
+frontend/          React UI
+backend/           Express API + SQL + calculator
+docker-compose.yml db + api + web
+docs/              Plan ve teknik dokümanlar
 ```
+
+## Notlar
+
+- Komisyon oranları tipik / seed değerlerdir; kesin oran için satıcı paneli esas alınmalı.
+- Etsy’de kategori komisyonu yoktur (transaction %6.5).
+- Shopify pazaryeri komisyonu almaz; preset Shopify Payments yaklaşık %2.9’dur.
+- Admin şifresini production’da `.env` ile değiştirin (`ADMIN_PASSWORD`, `JWT_SECRET`).

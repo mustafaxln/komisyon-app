@@ -335,9 +335,9 @@ Güvenlik ve düzen için. Şifreyi tarayıcıya koymak tehlikeli olur. İş kur
 - [x] **Gün 2** — Geçmiş kaydı: `calculations` tablosuna JSON yazmak
 - [x] **Gün 3** — Form state: kullanıcı seçince oran nasıl otomatik doluyor?
 - [x] **Gün 3** — Override: kullanıcı oranı elle değiştirince ne oluyor?
-- [ ] **Gün 4** — Admin: preset’i DB’de güncellemek
-- [ ] **Gün 4** — Docker Compose ile her şeyi tek komutta ayağa kaldırmak
-- [ ] **Gün 5** — README / sunum / repo
+- [x] **Gün 4** — Admin: preset’i DB’de güncellemek
+- [x] **Gün 4** — Docker Compose ile her şeyi tek komutta ayağa kaldırmak
+- [x] **Gün 5** — README / teknik doküman / sunum iskeleti (push sende)
 
 ---
 
