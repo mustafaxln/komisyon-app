@@ -78,5 +78,5 @@ CREATE TABLE IF NOT EXISTS marketplace_credentials (
 
 CREATE INDEX IF NOT EXISTS idx_commission_rates_marketplace ON commission_rates(marketplace_id);
 CREATE INDEX IF NOT EXISTS idx_calculations_created_at ON calculations(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_marketplaces_update_status ON marketplaces(update_status);
+-- update_status index'i migrate.js içinde (eski DB'de kolon yokken schema patlamasın)
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
