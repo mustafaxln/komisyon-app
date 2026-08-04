@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from './api'
 import { formatMoney, formatPercent } from './format'
 import './App.css'
 
 const COMMISSION_VAT_OPTIONS = [0, 1, 10, 20]
+const USER_TOKEN_KEY = 'komisyon_user_token'
+const USER_INFO_KEY = 'komisyon_user_info'
 
 const emptyForm = {
   marketplaceSlug: '',
@@ -19,6 +22,20 @@ const emptyForm = {
 }
 
 function App() {
+  const [userToken, setUserToken] = useState(() => localStorage.getItem(USER_TOKEN_KEY) || '')
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(USER_INFO_KEY) || 'null')
+    } catch {
+      return null
+    }
+  })
+  const [authMode, setAuthMode] = useState('login')
+  const [authEmail, setAuthEmail] = useState('user@komisyon.local')
+  const [authPassword, setAuthPassword] = useState('user123')
+  const [authName, setAuthName] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+
   const [tab, setTab] = useState('calc')
   const [marketplaces, setMarketplaces] = useState([])
   const [availableCategories, setAvailableCategories] = useState([])
@@ -33,7 +50,25 @@ function App() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    async function verify() {
+      if (!userToken) return
+      try {
+        const data = await api.userMe(userToken)
+        setUser(data.user)
+        localStorage.setItem(USER_INFO_KEY, JSON.stringify(data.user))
+      } catch {
+        localStorage.removeItem(USER_TOKEN_KEY)
+        localStorage.removeItem(USER_INFO_KEY)
+        setUserToken('')
+        setUser(null)
+      }
+    }
+    verify()
+  }, [userToken])
+
+  useEffect(() => {
     async function boot() {
+      if (!userToken) return
       try {
         const m = await api.getMarketplaces()
         setMarketplaces(m)
@@ -48,7 +83,7 @@ function App() {
       }
     }
     boot()
-  }, [])
+  }, [userToken])
 
   useEffect(() => {
     async function loadRatesForMarketplace() {
@@ -210,6 +245,110 @@ function App() {
     )
   }
 
+  async function handleAuthSubmit(e) {
+    e.preventDefault()
+    setAuthLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const data =
+        authMode === 'login'
+          ? await api.userLogin(authEmail, authPassword)
+          : await api.userRegister(authEmail, authPassword, authName)
+      localStorage.setItem(USER_TOKEN_KEY, data.token)
+      localStorage.setItem(USER_INFO_KEY, JSON.stringify(data.user))
+      setUserToken(data.token)
+      setUser(data.user)
+      setMessage(authMode === 'login' ? 'Giriş başarılı.' : 'Kayıt tamamlandı.')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  function logoutUser() {
+    localStorage.removeItem(USER_TOKEN_KEY)
+    localStorage.removeItem(USER_INFO_KEY)
+    setUserToken('')
+    setUser(null)
+    setMarketplaces([])
+    setResults(null)
+    setMessage('Çıkış yapıldı.')
+  }
+
+  if (!userToken) {
+    return (
+      <div className="app">
+        <header className="top">
+          <div>
+            <p className="eyebrow">Pazaryeri araçları</p>
+            <h1>Komisyon & Kârlılık Hesaplayıcı</h1>
+            <p className="sub">Devam etmek için giriş yapın veya hesap oluşturun.</p>
+          </div>
+          <Link className="back-link" to="/admin">
+            Admin
+          </Link>
+        </header>
+
+        {(error || message) && (
+          <div className={`banner ${error ? 'is-error' : 'is-ok'}`}>{error || message}</div>
+        )}
+
+        <section className="panel admin-login">
+          <div className="tabs" style={{ marginBottom: '1rem' }}>
+            <button
+              type="button"
+              className={authMode === 'login' ? 'active' : ''}
+              onClick={() => setAuthMode('login')}
+            >
+              Giriş
+            </button>
+            <button
+              type="button"
+              className={authMode === 'register' ? 'active' : ''}
+              onClick={() => setAuthMode('register')}
+            >
+              Kayıt ol
+            </button>
+          </div>
+          <h2>{authMode === 'login' ? 'Kullanıcı girişi' : 'Yeni hesap'}</h2>
+          <form className="form" onSubmit={handleAuthSubmit}>
+            {authMode === 'register' && (
+              <label>
+                Ad
+                <input value={authName} onChange={(e) => setAuthName(e.target.value)} />
+              </label>
+            )}
+            <label>
+              E-posta
+              <input
+                type="email"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Şifre
+              <input
+                type="password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </label>
+            <button type="submit" disabled={authLoading}>
+              {authLoading ? '…' : authMode === 'login' ? 'Giriş yap' : 'Kayıt ol'}
+            </button>
+          </form>
+          <p className="hint">Demo: user@komisyon.local / user123</p>
+        </section>
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <header className="top">
@@ -217,20 +356,33 @@ function App() {
           <p className="eyebrow">Pazaryeri araçları</p>
           <h1>Komisyon & Kârlılık Hesaplayıcı</h1>
           <p className="sub">
-            Pazaryeri ve kategori seç, oranı isteğe göre düzenle; net kâr, marj ve başabaş fiyatı gör.
+            {marketplaces.length} pazaryeri · {user?.name || user?.email} — oran seç, net kârı gör.
           </p>
         </div>
-        <nav className="tabs">
-          <button type="button" className={tab === 'calc' ? 'active' : ''} onClick={() => setTab('calc')}>
-            Hesapla
+        <div className="actions" style={{ marginTop: 0 }}>
+          <nav className="tabs">
+            <button type="button" className={tab === 'calc' ? 'active' : ''} onClick={() => setTab('calc')}>
+              Hesapla
+            </button>
+            <button
+              type="button"
+              className={tab === 'compare' ? 'active' : ''}
+              onClick={() => setTab('compare')}
+            >
+              Karşılaştır
+            </button>
+            <button
+              type="button"
+              className={tab === 'history' ? 'active' : ''}
+              onClick={() => setTab('history')}
+            >
+              Geçmiş
+            </button>
+          </nav>
+          <button type="button" className="ghost" onClick={logoutUser}>
+            Çıkış
           </button>
-          <button type="button" className={tab === 'compare' ? 'active' : ''} onClick={() => setTab('compare')}>
-            Karşılaştır
-          </button>
-          <button type="button" className={tab === 'history' ? 'active' : ''} onClick={() => setTab('history')}>
-            Geçmiş
-          </button>
-        </nav>
+        </div>
       </header>
 
       {(error || message) && (

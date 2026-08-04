@@ -1,49 +1,73 @@
--- Seed: sadece Amazon, Etsy, Trendyol, Hepsiburada, Shopify
--- Oranlar kamuya açık 2025–2026 kaynaklardan derlenmiş tipik değerlerdir.
--- Kesin oran satıcı paneline göre değişebilir; admin / kullanıcı override edebilir.
+-- Seed: 20 pazaryeri (Wisersell / TR+global kapsam)
+-- Oranlar tipik değerlerdir; scrape_ready olanlar web scraping ile güncellenir.
+-- auth_required / unavailable grupları şimdilik sadece listelenir (iş yapılmaz).
 
-TRUNCATE commission_rates, calculations, marketplace_credentials, categories, marketplaces, admins RESTART IDENTITY CASCADE;
+TRUNCATE commission_rates, calculations, marketplace_credentials, categories, marketplaces, admins, users RESTART IDENTITY CASCADE;
 
--- update_status grupları (AI yok):
---   scrape_ready  → web scraping ile doğrudan güncelle
---   auth_required → giriş sonrası scraping
---   unavailable   → scraping ile erişilemiyor
+-- update_status:
+--   scrape_ready  → web scraping ile doğrudan güncelle (şimdi işimiz bunlar)
+--   auth_required → belirli giriş/gereksinim sonrası erişilebilir (şimdilik dokunulmaz)
+--   unavailable   → hiç erişilemiyor (şimdilik dokunulmaz)
 INSERT INTO marketplaces (name, slug, base_type, region, update_status, scrape_url, scrape_notes, auth_status) VALUES
-  (
-    'Trendyol', 'trendyol', 'ex_vat', 'tr',
-    'auth_required',
-    'https://partner.trendyol.com/',
-    'Komisyon oranları satıcı panelinde. Giriş sonrası scraping denenir.',
-    'pending'
-  ),
-  (
-    'Hepsiburada', 'hepsiburada', 'inc_vat', 'tr',
-    'auth_required',
-    'https://merchant.hepsiburada.com/',
-    'Komisyon oranları merchant panelinde. Giriş sonrası scraping denenir.',
-    'pending'
-  ),
-  (
-    'Amazon', 'amazon', 'inc_vat', 'global',
-    'scrape_ready',
-    'https://sellercentral.amazon.com/help/hub/reference/G200336920',
-    'Kamuya açık referral fee tablosu — giriş gerekmez.',
-    'none'
-  ),
-  (
-    'Etsy', 'etsy', 'inc_vat', 'global',
-    'scrape_ready',
-    'https://www.etsy.com/sell',
-    'Kamuya açık işlem ücreti sayfası — giriş gerekmez.',
-    'none'
-  ),
-  (
-    'Shopify', 'shopify', 'inc_vat', 'global',
-    'scrape_ready',
-    'https://www.shopify.com/pricing',
-    'Kamuya açık Shopify Payments ücretleri — giriş gerekmez.',
-    'none'
-  );
+  -- scrape_ready
+  ('Amazon', 'amazon', 'inc_vat', 'global', 'scrape_ready',
+   'https://sellercentral.amazon.com/help/hub/reference/G200336920',
+   'Kamuya açık referral fee — scraping ile güncellenir.', 'none'),
+  ('Etsy', 'etsy', 'inc_vat', 'global', 'scrape_ready',
+   'https://www.etsy.com/sell',
+   'Kamuya açık işlem ücreti — scraping ile güncellenir.', 'none'),
+  ('Shopify', 'shopify', 'inc_vat', 'global', 'scrape_ready',
+   'https://www.shopify.com/pricing',
+   'Kamuya açık Payments ücreti — scraping ile güncellenir.', 'none'),
+  ('eBay', 'ebay', 'inc_vat', 'global', 'scrape_ready',
+   'https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees',
+   'Kamuya açık selling fees — scraping ile güncellenir.', 'none'),
+  -- auth_required (şimdilik gruplanır, scraping yapılmaz)
+  ('Trendyol', 'trendyol', 'ex_vat', 'tr', 'auth_required',
+   'https://partner.trendyol.com/',
+   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Hepsiburada', 'hepsiburada', 'inc_vat', 'tr', 'auth_required',
+   'https://merchant.hepsiburada.com/',
+   'Merchant paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('N11', 'n11', 'ex_vat', 'tr', 'auth_required',
+   'https://so.n11.com/',
+   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Pazarama', 'pazarama', 'inc_vat', 'tr', 'auth_required',
+   'https://www.pazarama.com/',
+   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Çiçeksepeti', 'ciceksepeti', 'inc_vat', 'tr', 'auth_required',
+   'https://www.ciceksepeti.com/',
+   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('ePttAVM', 'epttavm', 'inc_vat', 'tr', 'auth_required',
+   'https://www.pttavm.com/',
+   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Walmart', 'walmart', 'inc_vat', 'global', 'auth_required',
+   'https://marketplace.walmart.com/',
+   'Seller Center girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Bol.com', 'bol', 'inc_vat', 'global', 'auth_required',
+   'https://partner.bol.com/',
+   'Partner paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('TikTok Shop', 'tiktok-shop', 'inc_vat', 'global', 'auth_required',
+   'https://seller.tiktok.com/',
+   'Seller Center girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Kaufland', 'kaufland', 'inc_vat', 'global', 'auth_required',
+   'https://sellerportal.kaufland.com/',
+   'Seller portal girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Allegro', 'allegro', 'inc_vat', 'global', 'auth_required',
+   'https://allegro.pl/',
+   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  ('Ozon', 'ozon', 'inc_vat', 'global', 'auth_required',
+   'https://seller.ozon.ru/',
+   'Seller paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
+  -- unavailable
+  ('Wish', 'wish', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none'),
+  ('Fruugo', 'fruugo', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none'),
+  ('OnBuy', 'onbuy', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none'),
+  ('Wayfair', 'wayfair', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none');
 
 -- Ortak / geniş ürün kategorileri (slug benzersiz)
 INSERT INTO categories (name, slug) VALUES
@@ -268,3 +292,35 @@ SELECT m.id, c.id, 2.900,
 FROM marketplaces m
 CROSS JOIN categories c
 WHERE m.slug = 'shopify';
+
+-- ========== EBAY ==========
+INSERT INTO commission_rates (marketplace_id, category_id, rate_percent, source_note)
+SELECT m.id, c.id, 13.250,
+  'eBay tipik final value fee ~%13.25 (kategori/abonelik değişebilir)'
+FROM marketplaces m
+CROSS JOIN categories c
+WHERE m.slug = 'ebay';
+
+-- ========== DİĞER PAZARYERLERİ (tipik genel oran — tüm kategoriler) ==========
+-- auth_required / unavailable: seed preset; scraping şimdilik uygulanmaz
+INSERT INTO commission_rates (marketplace_id, category_id, rate_percent, source_note)
+SELECT m.id, c.id, d.rate, d.note
+FROM marketplaces m
+JOIN (
+  VALUES
+    ('n11', 12.000, 'N11 tipik kategori komisyonu (seed; panel teyidi gerekir)'),
+    ('pazarama', 12.000, 'Pazarama tipik komisyon (seed; panel teyidi gerekir)'),
+    ('ciceksepeti', 15.000, 'Çiçeksepeti tipik komisyon (seed; panel teyidi gerekir)'),
+    ('epttavm', 10.000, 'ePttAVM tipik komisyon (seed; panel teyidi gerekir)'),
+    ('walmart', 15.000, 'Walmart Marketplace tipik referral (seed)'),
+    ('bol', 15.000, 'Bol.com tipik commission (seed)'),
+    ('tiktok-shop', 8.000, 'TikTok Shop tipik commission (seed)'),
+    ('kaufland', 14.000, 'Kaufland tipik commission (seed)'),
+    ('allegro', 12.000, 'Allegro tipik commission (seed)'),
+    ('ozon', 15.000, 'Ozon tipik commission (seed)'),
+    ('wish', 15.000, 'Wish tipik (erişilemiyor — seed only)'),
+    ('fruugo', 15.000, 'Fruugo tipik (erişilemiyor — seed only)'),
+    ('onbuy', 12.000, 'OnBuy tipik (erişilemiyor — seed only)'),
+    ('wayfair', 15.000, 'Wayfair tipik (erişilemiyor — seed only)')
+) AS d(slug, rate, note) ON d.slug = m.slug
+CROSS JOIN categories c;

@@ -38,6 +38,17 @@ export const api = {
     request('/api/calculations', { method: 'POST', body: JSON.stringify(body) }),
   getCalculations: (limit = 20) => request(`/api/calculations?limit=${limit}`),
   health: () => request('/api/health'),
+  userLogin: (email, password) =>
+    request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  userRegister: (email, password, name) =>
+    request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    }),
+  userMe: (token) => request('/api/auth/me', { token }),
   adminLogin: (email, password) =>
     request('/api/admin/login', {
       method: 'POST',

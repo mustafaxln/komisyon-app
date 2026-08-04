@@ -28,6 +28,25 @@ async function ensureAdmin() {
   console.log(`Admin hazır: ${email}`);
 }
 
+async function ensureDemoUser() {
+  const email = (process.env.USER_EMAIL || 'user@komisyon.local').trim().toLowerCase();
+  const password = process.env.USER_PASSWORD || 'user123';
+  const name = process.env.USER_NAME || 'Demo Kullanıcı';
+  const hash = await bcrypt.hash(password, 10);
+
+  await pool.query(
+    `
+    INSERT INTO users (email, password_hash, name)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (email)
+    DO UPDATE SET password_hash = EXCLUDED.password_hash, name = EXCLUDED.name
+    `,
+    [email, hash, name]
+  );
+
+  console.log(`Kullanıcı hazır: ${email}`);
+}
+
 async function main() {
   try {
     await runSqlFile(path.join(__dirname, 'schema.sql'));
@@ -46,6 +65,7 @@ async function main() {
     }
 
     await ensureAdmin();
+    await ensureDemoUser();
 
     const markets = await pool.query('SELECT COUNT(*)::int AS count FROM marketplaces');
     const rates = await pool.query('SELECT COUNT(*)::int AS count FROM commission_rates');

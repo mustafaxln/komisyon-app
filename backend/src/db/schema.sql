@@ -56,6 +56,15 @@ CREATE TABLE IF NOT EXISTS admins (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Uygulama kullanıcıları (hesaplayıcı girişi)
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(150),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Pazaryeri satıcı paneli kimlik bilgileri (auth_required grubu)
 CREATE TABLE IF NOT EXISTS marketplace_credentials (
   id SERIAL PRIMARY KEY,
@@ -70,3 +79,4 @@ CREATE TABLE IF NOT EXISTS marketplace_credentials (
 CREATE INDEX IF NOT EXISTS idx_commission_rates_marketplace ON commission_rates(marketplace_id);
 CREATE INDEX IF NOT EXISTS idx_calculations_created_at ON calculations(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_marketplaces_update_status ON marketplaces(update_status);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

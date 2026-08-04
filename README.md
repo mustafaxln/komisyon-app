@@ -18,7 +18,8 @@ docker compose up --build
 
 **Admin:** http://localhost:3000/admin  
 E-posta: `admin@komisyon.local` · Şifre: `admin123`  
-(Ana hesaplayıcıda Admin sekmesi yoktur; adres elle yazılır.)
+
+**Kullanıcı (hesaplayıcı girişi):** `user@komisyon.local` · `user123`
 
 İlk açılışta tablolar + seed + admin otomatik oluşur. Seed’i sıfırdan yenilemek için:
 

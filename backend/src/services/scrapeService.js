@@ -11,6 +11,7 @@ const { decryptSecret } = require('./cryptoSecrets');
 const etsy = require('./scrapers/etsy');
 const shopify = require('./scrapers/shopify');
 const amazon = require('./scrapers/amazon');
+const ebay = require('./scrapers/ebay');
 const trendyol = require('./scrapers/trendyol');
 const hepsiburada = require('./scrapers/hepsiburada');
 
@@ -18,6 +19,7 @@ const SCRAPERS = {
   etsy,
   shopify,
   amazon,
+  ebay,
   trendyol,
   hepsiburada,
 };
@@ -135,21 +137,19 @@ async function scrapeMarketplace(slug, options = {}) {
   }
 
   if (market.update_status === 'auth_required') {
-    if (market.auth_status !== 'authenticated') {
-      const message =
-        'Bu pazaryeri için önce satıcı paneli girişi gerekli. Kimlik bilgilerini kaydedin, ardından scraping çalıştırın.';
-      await markScrapeResult(market.id, false, message);
-      return {
-        ok: false,
-        status: 'auth_required',
-        group: 'auth_required',
-        groupLabel: GROUP_LABELS.auth_required,
-        needsAuth: true,
-        slug,
-        name: market.name,
-        message,
-      };
-    }
+    const message =
+      'Bu pazaryeri belirli giriş/gereksinim sonrası erişilebilir. Şimdilik güncellenmez — sadece gruplandı.';
+    await markScrapeResult(market.id, false, message);
+    return {
+      ok: false,
+      status: 'auth_required',
+      group: 'auth_required',
+      groupLabel: GROUP_LABELS.auth_required,
+      needsAuth: true,
+      slug,
+      name: market.name,
+      message,
+    };
   }
 
   const scraper = SCRAPERS[slug];
@@ -309,20 +309,21 @@ async function listGroupedMarketplaces() {
     scrape_ready: {
       key: 'scrape_ready',
       label: GROUP_LABELS.scrape_ready,
-      description: 'Erişimi olan pazaryerleri — web scraping ile doğrudan güncellenir. AI kullanılmaz.',
+      description:
+        'Web scraping ile doğrudan erişilebilenler. Şu an yalnızca bu grup güncellenir.',
       items: [],
     },
     auth_required: {
       key: 'auth_required',
       label: GROUP_LABELS.auth_required,
       description:
-        'Scraping için önce satıcı paneli girişi gerekir. Auth kaydedildikten sonra scraping çalışır.',
+        'Belirli giriş / gereksinim sonrası erişilebilir. Şimdilik sadece gruplanır; scraping yapılmaz.',
       items: [],
     },
     unavailable: {
       key: 'unavailable',
       label: GROUP_LABELS.unavailable,
-      description: 'Web scraping ile erişilemeyen / güncellenemeyen pazaryerleri. Manuel güncelleme gerekir.',
+      description: 'Scraping ile erişilemeyenler. Şimdilik sadece gruplanır; manuel kalır.',
       items: [],
     },
   };
@@ -349,14 +350,12 @@ async function listGroupedMarketplaces() {
 }
 
 /**
- * scrape_ready olanları (ve auth tamamlanmış auth_required olanları) güncelle.
+ * Sadece scrape_ready olanları güncelle.
+ * auth_required / unavailable şimdilik sadece gruplanır, iş yapılmaz.
  */
 async function scrapeAllEligible() {
   const grouped = await listGroupedMarketplaces();
-  const targets = [
-    ...grouped.groups[0].items,
-    ...grouped.groups[1].items.filter((m) => m.auth_status === 'authenticated'),
-  ];
+  const targets = grouped.groups[0].items; // scrape_ready only
 
   const results = [];
   for (const market of targets) {
@@ -364,7 +363,7 @@ async function scrapeAllEligible() {
     results.push(await scrapeMarketplace(market.slug));
   }
 
-  const skippedAuth = grouped.groups[1].items.filter((m) => m.auth_status !== 'authenticated');
+  const skippedAuth = grouped.groups[1].items;
   const skippedUnavailable = grouped.groups[2].items;
 
   return {
@@ -373,12 +372,12 @@ async function scrapeAllEligible() {
       auth_required: skippedAuth.map((m) => ({
         slug: m.slug,
         name: m.name,
-        reason: 'Giriş gerekli — kimlik bilgisi kaydedilmeden scraping yapılmaz.',
+        reason: 'Belirli giriş/gereksinim sonrası erişilebilir — şimdilik güncellenmez.',
       })),
       unavailable: skippedUnavailable.map((m) => ({
         slug: m.slug,
         name: m.name,
-        reason: m.scrape_notes || 'Scraping ile erişilemiyor.',
+        reason: m.scrape_notes || 'Scraping ile erişilemiyor — şimdilik güncellenmez.',
       })),
     },
     summary: {

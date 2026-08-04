@@ -1,5 +1,5 @@
 /**
- * Mevcut DB'ye scraping/gruplama kolonlarını ekler (idempotent).
+ * Mevcut DB'ye scraping/gruplama + users kolonlarını ekler (idempotent).
  */
 const { pool } = require('./pool');
 
@@ -47,56 +47,23 @@ async function migrateMarketplaceAccess() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      name VARCHAR(150),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_marketplaces_update_status ON marketplaces(update_status)
   `);
-
-  // Sadece henüz yapılandırılmamış (scrape_url boş) kayıtları doldur
   await pool.query(`
-    UPDATE marketplaces SET
-      update_status = 'scrape_ready',
-      scrape_url = 'https://www.etsy.com/sell',
-      scrape_notes = 'Kamuya açık işlem ücreti sayfası — giriş gerekmez.',
-      auth_status = 'none'
-    WHERE slug = 'etsy' AND scrape_url IS NULL
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)
   `);
 
-  await pool.query(`
-    UPDATE marketplaces SET
-      update_status = 'scrape_ready',
-      scrape_url = 'https://www.shopify.com/pricing',
-      scrape_notes = 'Kamuya açık Shopify Payments ücretleri — giriş gerekmez.',
-      auth_status = 'none'
-    WHERE slug = 'shopify' AND scrape_url IS NULL
-  `);
-
-  await pool.query(`
-    UPDATE marketplaces SET
-      update_status = 'scrape_ready',
-      scrape_url = 'https://sellercentral.amazon.com/help/hub/reference/G200336920',
-      scrape_notes = 'Kamuya açık referral fee tablosu — giriş gerekmez.',
-      auth_status = 'none'
-    WHERE slug = 'amazon' AND scrape_url IS NULL
-  `);
-
-  await pool.query(`
-    UPDATE marketplaces SET
-      update_status = 'auth_required',
-      scrape_url = 'https://partner.trendyol.com/',
-      scrape_notes = 'Komisyon oranları satıcı panelinde. Giriş sonrası scraping denenir.',
-      auth_status = 'pending'
-    WHERE slug = 'trendyol' AND scrape_url IS NULL
-  `);
-
-  await pool.query(`
-    UPDATE marketplaces SET
-      update_status = 'auth_required',
-      scrape_url = 'https://merchant.hepsiburada.com/',
-      scrape_notes = 'Komisyon oranları merchant panelinde. Giriş sonrası scraping denenir.',
-      auth_status = 'pending'
-    WHERE slug = 'hepsiburada' AND scrape_url IS NULL
-  `);
-
-  console.log('OK: marketplace access migration');
+  console.log('OK: marketplace access + users migration');
 }
 
 module.exports = { migrateMarketplaceAccess };

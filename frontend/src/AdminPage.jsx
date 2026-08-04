@@ -31,7 +31,6 @@ export default function AdminPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [drafts, setDrafts] = useState({})
-  const [authDrafts, setAuthDrafts] = useState({})
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
 
@@ -154,65 +153,8 @@ export default function AdminPage() {
       const result = await api.adminScrapeAll(token)
       const s = result.summary || {}
       setMessage(
-        `Toplu scraping: ${s.updated || 0} güncellendi, ${s.failed || 0} başarısız, ${s.waitingAuth || 0} giriş bekliyor, ${s.unavailable || 0} erişilemiyor.`
+        `Scraping (sadece erişilebilirler): ${s.updated || 0} güncellendi, ${s.failed || 0} başarısız · atlandı: auth=${s.waitingAuth || 0}, erişilemiyor=${s.unavailable || 0}`
       )
-      await loadAll()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function saveAuth(slug) {
-    const draft = authDrafts[slug] || {}
-    if (!draft.username || !draft.password) {
-      setError('Kullanıcı adı ve şifre gerekli.')
-      return
-    }
-    setLoading(true)
-    setMessage(null)
-    setError(null)
-    try {
-      const result = await api.adminMarketplaceAuth(token, slug, {
-        username: draft.username,
-        password: draft.password,
-      })
-      setMessage(result.message)
-      setAuthDrafts((prev) => ({ ...prev, [slug]: { username: draft.username, password: '' } }))
-      await loadAll()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function clearAuth(slug) {
-    setLoading(true)
-    setMessage(null)
-    setError(null)
-    try {
-      await api.adminClearMarketplaceAuth(token, slug)
-      setMessage(`${slug} kimlik bilgileri silindi.`)
-      await loadAll()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function markUnavailable(slug) {
-    setLoading(true)
-    setMessage(null)
-    setError(null)
-    try {
-      await api.adminSetMarketplaceStatus(token, slug, {
-        update_status: 'unavailable',
-        scrape_notes: 'Scraping ile erişilemiyor — manuel güncelleme gerekir.',
-      })
-      setMessage(`${slug} "güncellenemiyor" grubuna alındı.`)
       await loadAll()
     } catch (err) {
       setError(err.message)
@@ -228,8 +170,8 @@ export default function AdminPage() {
           <p className="eyebrow">Yönetim</p>
           <h1>Admin — Komisyon & scraping</h1>
           <p className="sub">
-            AI yok. Pazaryerleri erişim durumuna göre gruplanır: doğrudan scraping, giriş sonrası
-            scraping, güncellenemeyenler.
+            20 pazaryeri erişim durumuna göre gruplanır. Şimdilik yalnızca web scraping ile
+            erişilebilenler güncellenir; diğer gruplara dokunulmaz.
           </p>
         </div>
         <Link className="back-link" to="/">
@@ -274,7 +216,7 @@ export default function AdminPage() {
               <h2>Pazaryeri erişim grupları</h2>
               <div className="actions">
                 <button type="button" onClick={scrapeAll} disabled={loading}>
-                  Uygun olanları scraping ile güncelle
+                  Scraping ile güncelle (sadece erişilebilirler)
                 </button>
                 <button type="button" className="ghost" onClick={() => loadAll()} disabled={loading}>
                   Yenile
@@ -343,105 +285,20 @@ export default function AdminPage() {
                           >
                             Scraping ile güncelle
                           </button>
-                          <button
-                            type="button"
-                            className="ghost"
-                            onClick={() => markUnavailable(m.slug)}
-                            disabled={loading}
-                          >
-                            Erişilemiyor olarak ayır
-                          </button>
                         </div>
                       )}
 
                       {group.key === 'auth_required' && (
-                        <div className="auth-block">
-                          {m.auth_status !== 'authenticated' ? (
-                            <div className="row auth-form-row">
-                              <label>
-                                Kullanıcı / e-posta
-                                <input
-                                  value={authDrafts[m.slug]?.username || ''}
-                                  onChange={(e) =>
-                                    setAuthDrafts((prev) => ({
-                                      ...prev,
-                                      [m.slug]: {
-                                        ...prev[m.slug],
-                                        username: e.target.value,
-                                      },
-                                    }))
-                                  }
-                                  placeholder="satıcı paneli hesabı"
-                                />
-                              </label>
-                              <label>
-                                Şifre
-                                <input
-                                  type="password"
-                                  value={authDrafts[m.slug]?.password || ''}
-                                  onChange={(e) =>
-                                    setAuthDrafts((prev) => ({
-                                      ...prev,
-                                      [m.slug]: {
-                                        ...prev[m.slug],
-                                        password: e.target.value,
-                                      },
-                                    }))
-                                  }
-                                  placeholder="••••••••"
-                                />
-                              </label>
-                            </div>
-                          ) : (
-                            <p className="hint">
-                              Kayıtlı hesap: {m.credential_username || '—'} · Auth:{' '}
-                              {formatTime(m.authenticated_at)}
-                            </p>
-                          )}
-                          <div className="actions">
-                            {m.auth_status !== 'authenticated' ? (
-                              <button
-                                type="button"
-                                onClick={() => saveAuth(m.slug)}
-                                disabled={loading}
-                              >
-                                Giriş bilgilerini kaydet
-                              </button>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => scrapeOne(m.slug)}
-                                  disabled={loading}
-                                >
-                                  Auth sonrası scraping çalıştır
-                                </button>
-                                <button
-                                  type="button"
-                                  className="ghost"
-                                  onClick={() => clearAuth(m.slug)}
-                                  disabled={loading}
-                                >
-                                  Girişi kaldır
-                                </button>
-                              </>
-                            )}
-                            <button
-                              type="button"
-                              className="ghost"
-                              onClick={() => markUnavailable(m.slug)}
-                              disabled={loading}
-                            >
-                              Erişilemiyor olarak ayır
-                            </button>
-                          </div>
-                        </div>
+                        <p className="hint">
+                          Belirli giriş / gereksinim sonrası erişilebilir. Şimdilik işimiz yok —
+                          sadece gruplandı.
+                        </p>
                       )}
 
                       {group.key === 'unavailable' && (
                         <p className="hint">
-                          Bu pazaryeri scraping ile güncellenemez. Aşağıdaki oran tablosundan manuel
-                          düzenleyin.
+                          Scraping ile erişilemiyor. Şimdilik işimiz yok — sadece gruplandı. Oranlar
+                          manuel kalır.
                         </p>
                       )}
                     </div>
