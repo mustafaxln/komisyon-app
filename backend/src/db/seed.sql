@@ -2,14 +2,48 @@
 -- Oranlar kamuya açık 2025–2026 kaynaklardan derlenmiş tipik değerlerdir.
 -- Kesin oran satıcı paneline göre değişebilir; admin / kullanıcı override edebilir.
 
-TRUNCATE commission_rates, calculations, categories, marketplaces, admins RESTART IDENTITY CASCADE;
+TRUNCATE commission_rates, calculations, marketplace_credentials, categories, marketplaces, admins RESTART IDENTITY CASCADE;
 
-INSERT INTO marketplaces (name, slug, base_type, region) VALUES
-  ('Trendyol', 'trendyol', 'ex_vat', 'tr'),
-  ('Hepsiburada', 'hepsiburada', 'inc_vat', 'tr'),
-  ('Amazon', 'amazon', 'inc_vat', 'global'),
-  ('Etsy', 'etsy', 'inc_vat', 'global'),
-  ('Shopify', 'shopify', 'inc_vat', 'global');
+-- update_status grupları (AI yok):
+--   scrape_ready  → web scraping ile doğrudan güncelle
+--   auth_required → giriş sonrası scraping
+--   unavailable   → scraping ile erişilemiyor
+INSERT INTO marketplaces (name, slug, base_type, region, update_status, scrape_url, scrape_notes, auth_status) VALUES
+  (
+    'Trendyol', 'trendyol', 'ex_vat', 'tr',
+    'auth_required',
+    'https://partner.trendyol.com/',
+    'Komisyon oranları satıcı panelinde. Giriş sonrası scraping denenir.',
+    'pending'
+  ),
+  (
+    'Hepsiburada', 'hepsiburada', 'inc_vat', 'tr',
+    'auth_required',
+    'https://merchant.hepsiburada.com/',
+    'Komisyon oranları merchant panelinde. Giriş sonrası scraping denenir.',
+    'pending'
+  ),
+  (
+    'Amazon', 'amazon', 'inc_vat', 'global',
+    'scrape_ready',
+    'https://sellercentral.amazon.com/help/hub/reference/G200336920',
+    'Kamuya açık referral fee tablosu — giriş gerekmez.',
+    'none'
+  ),
+  (
+    'Etsy', 'etsy', 'inc_vat', 'global',
+    'scrape_ready',
+    'https://www.etsy.com/sell',
+    'Kamuya açık işlem ücreti sayfası — giriş gerekmez.',
+    'none'
+  ),
+  (
+    'Shopify', 'shopify', 'inc_vat', 'global',
+    'scrape_ready',
+    'https://www.shopify.com/pricing',
+    'Kamuya açık Shopify Payments ücretleri — giriş gerekmez.',
+    'none'
+  );
 
 -- Ortak / geniş ürün kategorileri (slug benzersiz)
 INSERT INTO categories (name, slug) VALUES

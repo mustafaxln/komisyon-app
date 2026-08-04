@@ -51,6 +51,7 @@ cd frontend && npm install && npm run dev
 - Pazaryeri karşılaştırma tablosu
 - Hesaplama geçmişi
 - Admin ile komisyon preset güncelleme / ekleme / silme
+- **Pazaryeri erişim grupları (AI yok):** doğrudan scraping / giriş sonrası scraping / güncellenemeyenler
 - Docker Compose ile tek komut deploy
 
 ## Teknoloji
@@ -69,6 +70,7 @@ cd frontend && npm install && npm run dev
 |-------|--------|
 | [docs/TEKNIK-DOKUMAN.md](./docs/TEKNIK-DOKUMAN.md) | Mimari, API, formüller, Docker |
 | [docs/PM-MESAJI.md](./docs/PM-MESAJI.md) | PM kapsam mesajı |
+| [docs/PM-SCRAPING-GRUPLAMA.md](./docs/PM-SCRAPING-GRUPLAMA.md) | AI kaldırıldı; scraping erişim grupları |
 | [docs/YOL-HARITASI.md](./docs/YOL-HARITASI.md) | 5 günlük plan |
 | [docs/OGRENME-DEFTERI.md](./docs/OGRENME-DEFTERI.md) | Genel öğrenme notları |
 | [docs/BACKEND-OGRENME.md](./docs/BACKEND-OGRENME.md) | Backend satır satır |

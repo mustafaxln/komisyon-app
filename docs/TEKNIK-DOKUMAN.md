@@ -81,7 +81,8 @@ Kod: `backend/src/services/calculator.js`
 | Method | Path | Açıklama |
 |--------|------|----------|
 | GET | `/api/health` | Sağlık + DB |
-| GET | `/api/marketplaces` | Pazaryerleri |
+| GET | `/api/marketplaces` | Pazaryerleri (+ erişim alanları) |
+| GET | `/api/marketplaces/access-groups` | Üç gruba ayrılmış liste |
 | GET | `/api/categories` | Kategoriler |
 | GET | `/api/rates?marketplace=&category=` | Oranlar |
 | POST | `/api/calculate` | Tek hesap |
@@ -99,6 +100,12 @@ Kod: `backend/src/services/calculator.js`
 | PUT | `/api/admin/rates/:id` | Oran güncelle |
 | POST | `/api/admin/rates` | Oran ekle / upsert |
 | DELETE | `/api/admin/rates/:id` | Oran sil |
+| GET | `/api/admin/marketplaces/access-groups` | Scraping grupları |
+| POST | `/api/admin/marketplaces/scrape-all` | Uygun olanları scraping ile güncelle |
+| POST | `/api/admin/marketplaces/:slug/scrape` | Tek pazaryeri scraping |
+| POST | `/api/admin/marketplaces/:slug/auth` | Auth-required için kimlik kaydı |
+| DELETE | `/api/admin/marketplaces/:slug/auth` | Kimlik sil |
+| PATCH | `/api/admin/marketplaces/:slug/status` | Grubu elle değiştir |
 
 Örnek hesap:
 
@@ -112,11 +119,24 @@ curl -s -X POST http://localhost:3001/api/calculate \
 
 ## 5. Veritabanı şeması (özet)
 
-- `marketplaces(id, name, slug, base_type, region, is_active)`
+- `marketplaces(id, name, slug, base_type, region, is_active, update_status, scrape_url, scrape_notes, auth_status, last_scraped_at, last_scrape_message)`
+  - `update_status`: `scrape_ready` | `auth_required` | `unavailable`
+  - `auth_status`: `none` | `pending` | `authenticated` | `failed`
+- `marketplace_credentials(marketplace_id, username, secret_encrypted, …)` — auth_required panelleri
 - `categories(id, name, slug)`
 - `commission_rates(id, marketplace_id, category_id, rate_percent, source_note, updated_at)` UNIQUE(marketplace, category)
 - `calculations(id, marketplace_id, category_id, inputs_json, results_json, created_at)`
 - `admins(id, email, password_hash)`
+
+### Komisyon güncelleme (AI yok)
+
+PM kararı: AI kaldırıldı. Oranlar web scraping ile güncellenir ve pazaryerleri erişim durumuna göre gruplanır.
+
+| Grup | Seed örnekleri |
+|------|----------------|
+| `scrape_ready` | Amazon, Etsy, Shopify |
+| `auth_required` | Trendyol, Hepsiburada |
+| `unavailable` | (scraping erişemezse buraya ayrılır) |
 
 ---
 
@@ -156,4 +176,8 @@ Kök `.env.example` ve `backend/.env.example` dosyalarına bak.
 
 ## 9. Pazaryeri kapsamı
 
-Amazon, Etsy, Trendyol, Hepsiburada, Shopify — seed oranlar tipik değerlerdir; admin panelinden güncellenir.
+Amazon, Etsy, Trendyol, Hepsiburada, Shopify — seed oranlar tipik değerlerdir.
+
+- Kamuya açık ücret sayfası olanlar (`scrape_ready`) admin’den scraping ile güncellenir.
+- Satıcı paneli gerekenler (`auth_required`) önce giriş bilgisi ister; auth sonrası scraping denenir.
+- Erişilemeyenler (`unavailable`) manuel güncellenir.

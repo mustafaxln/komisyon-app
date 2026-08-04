@@ -18,7 +18,7 @@ async function request(path, options = {}) {
 
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    throw new Error(data.error || `İstek başarısız (${res.status})`)
+    throw new Error(data.error || data.message || `İstek başarısız (${res.status})`)
   }
   return data
 }
@@ -62,4 +62,32 @@ export const api = {
     }),
   adminDeleteRate: (token, id) =>
     request(`/api/admin/rates/${id}`, { method: 'DELETE', token }),
+  getAccessGroups: () => request('/api/marketplaces/access-groups'),
+  adminAccessGroups: (token) =>
+    request('/api/admin/marketplaces/access-groups', { token }),
+  adminScrapeAll: (token) =>
+    request('/api/admin/marketplaces/scrape-all', { method: 'POST', token, body: '{}' }),
+  adminScrapeMarketplace: (token, slug, body = {}) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/scrape`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  adminMarketplaceAuth: (token, slug, body) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/auth`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  adminClearMarketplaceAuth: (token, slug) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/auth`, {
+      method: 'DELETE',
+      token,
+    }),
+  adminSetMarketplaceStatus: (token, slug, body) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/status`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify(body),
+    }),
 }

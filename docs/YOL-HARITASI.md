@@ -316,6 +316,18 @@ Bundan sonra her seferinde şöyle ilerleyelim:
 
 - Kullanıcı kaydı / çoklu hesap
 - Gerçek ödeme, fatura
-- Pazaryerlerinden otomatik komisyon çekme (admin preset + kullanıcı override yeterli)
+- **AI ile komisyon tahmini / güncelleme** (PM kararı: AI kaldırıldı; web scraping gruplaması kullanılıyor)
 - Mobil native uygulama
 - Çok dilli arayüz
+
+## 13. Komisyon güncelleme grupları (PM)
+
+AI kullanılmaz. Pazaryerleri erişim durumuna göre üç gruba ayrılır:
+
+| Grup | `update_status` | Davranış |
+|------|-----------------|----------|
+| Doğrudan güncellenebilir | `scrape_ready` | Web scraping ile oranlar çekilir ve DB güncellenir (Amazon, Etsy, Shopify) |
+| Giriş sonrası scraping | `auth_required` | Önce satıcı paneli kimlik bilgisi istenir; kayıt sonrası scraping (Trendyol, Hepsiburada) |
+| Güncellenemiyor | `unavailable` | Scraping erişemez; admin manuel günceller |
+
+Admin → **Pazaryeri erişim grupları** paneli: uygun olanları toplu scraping ile güncelle, auth bekleyenleri ayır, erişilemeyenleri ayır.

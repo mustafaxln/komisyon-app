@@ -1,0 +1,102 @@
+/**
+ * Mevcut DB'ye scraping/gruplama kolonlarını ekler (idempotent).
+ */
+const { pool } = require('./pool');
+
+async function migrateMarketplaceAccess() {
+  await pool.query(`
+    ALTER TABLE marketplaces
+      ADD COLUMN IF NOT EXISTS update_status VARCHAR(30) NOT NULL DEFAULT 'unavailable',
+      ADD COLUMN IF NOT EXISTS scrape_url TEXT,
+      ADD COLUMN IF NOT EXISTS scrape_notes TEXT,
+      ADD COLUMN IF NOT EXISTS auth_status VARCHAR(20) NOT NULL DEFAULT 'none',
+      ADD COLUMN IF NOT EXISTS last_scraped_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS last_scrape_message TEXT
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'marketplaces_update_status_check'
+      ) THEN
+        ALTER TABLE marketplaces
+          ADD CONSTRAINT marketplaces_update_status_check
+          CHECK (update_status IN ('scrape_ready', 'auth_required', 'unavailable'));
+      END IF;
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'marketplaces_auth_status_check'
+      ) THEN
+        ALTER TABLE marketplaces
+          ADD CONSTRAINT marketplaces_auth_status_check
+          CHECK (auth_status IN ('none', 'pending', 'authenticated', 'failed'));
+      END IF;
+    END $$;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS marketplace_credentials (
+      id SERIAL PRIMARY KEY,
+      marketplace_id INTEGER NOT NULL UNIQUE REFERENCES marketplaces(id) ON DELETE CASCADE,
+      username VARCHAR(255) NOT NULL,
+      secret_encrypted TEXT NOT NULL,
+      auth_meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+      authenticated_at TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_marketplaces_update_status ON marketplaces(update_status)
+  `);
+
+  // Sadece henüz yapılandırılmamış (scrape_url boş) kayıtları doldur
+  await pool.query(`
+    UPDATE marketplaces SET
+      update_status = 'scrape_ready',
+      scrape_url = 'https://www.etsy.com/sell',
+      scrape_notes = 'Kamuya açık işlem ücreti sayfası — giriş gerekmez.',
+      auth_status = 'none'
+    WHERE slug = 'etsy' AND scrape_url IS NULL
+  `);
+
+  await pool.query(`
+    UPDATE marketplaces SET
+      update_status = 'scrape_ready',
+      scrape_url = 'https://www.shopify.com/pricing',
+      scrape_notes = 'Kamuya açık Shopify Payments ücretleri — giriş gerekmez.',
+      auth_status = 'none'
+    WHERE slug = 'shopify' AND scrape_url IS NULL
+  `);
+
+  await pool.query(`
+    UPDATE marketplaces SET
+      update_status = 'scrape_ready',
+      scrape_url = 'https://sellercentral.amazon.com/help/hub/reference/G200336920',
+      scrape_notes = 'Kamuya açık referral fee tablosu — giriş gerekmez.',
+      auth_status = 'none'
+    WHERE slug = 'amazon' AND scrape_url IS NULL
+  `);
+
+  await pool.query(`
+    UPDATE marketplaces SET
+      update_status = 'auth_required',
+      scrape_url = 'https://partner.trendyol.com/',
+      scrape_notes = 'Komisyon oranları satıcı panelinde. Giriş sonrası scraping denenir.',
+      auth_status = 'pending'
+    WHERE slug = 'trendyol' AND scrape_url IS NULL
+  `);
+
+  await pool.query(`
+    UPDATE marketplaces SET
+      update_status = 'auth_required',
+      scrape_url = 'https://merchant.hepsiburada.com/',
+      scrape_notes = 'Komisyon oranları merchant panelinde. Giriş sonrası scraping denenir.',
+      auth_status = 'pending'
+    WHERE slug = 'hepsiburada' AND scrape_url IS NULL
+  `);
+
+  console.log('OK: marketplace access migration');
+}
+
+module.exports = { migrateMarketplaceAccess };
