@@ -3,25 +3,17 @@
 **Tarih:** 4 Ağustos 2026  
 **Karar:** AI ile oran güncelleme şimdilik tamamen kaldırıldı.
 
-## Gruplama
+## Gruplama (20 pazaryeri)
 
-Pazaryerleri erişim durumuna göre üç gruba ayrılır:
+1. **Doğrudan güncellenebilir (`scrape_ready`)** — web scraping ile güncelle  
+   Amazon, Etsy, Shopify, eBay
 
-1. **Doğrudan güncellenebilir (`scrape_ready`)**  
-   Web scraping ile erişilebilen kamuya açık ücret/komisyon sayfaları → scraping çalışır, oranlar güncellenir.  
-   Örnek: Amazon, Etsy, Shopify
+2. **Gereksinim sonrası (`auth_required`)** — satıcı paneli / giriş gerekir; **şimdilik sadece gruplanır**  
+   Trendyol, Hepsiburada, N11, Pazarama, Çiçeksepeti, ePttAVM, Walmart, Bol.com, TikTok Shop, Kaufland, Allegro, Ozon
 
-2. **Giriş sonrası scraping (`auth_required`)**  
-   Scraping için satıcı/merchant paneli girişi gerekir. Admin’den kimlik kaydı istenir; auth tamamlanınca scraping çalıştırılır.  
-   Örnek: Trendyol, Hepsiburada
+3. **Erişilemiyor (`unavailable`)** — scraping yok; **şimdilik sadece gruplanır**  
+   Wish, Fruugo, OnBuy, Wayfair
 
-3. **Güncellenemiyor (`unavailable`)**  
-   Scraping ile erişilemeyenler ayrı tutulur; oranlar manuel güncellenir.
+## Şu anki iş
 
-## Davranış özeti
-
-- Uygun olanlar → scraping ile güncelle  
-- Auth bekleyenler → giriş iste, sonra scraping  
-- Erişilemeyenler → ayır / manuel
-
-Admin paneli (`/admin`) bu üç grubu gösterir ve toplu / tekil scraping tetikler.
+Yalnızca `scrape_ready` grubu scraping ile güncellenir. Diğer iki grup listelenir, işlem yapılmaz.

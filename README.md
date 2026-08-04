@@ -52,7 +52,9 @@ cd frontend && npm install && npm run dev
 - Pazaryeri karşılaştırma tablosu
 - Hesaplama geçmişi
 - Admin ile komisyon preset güncelleme / ekleme / silme
-- **Pazaryeri erişim grupları (AI yok):** doğrudan scraping / giriş sonrası scraping / güncellenemeyenler
+- Kullanıcı girişi / kayıt (hesaplayıcı)
+- **20 pazaryeri**, erişim grupları: scraping ile güncellenebilir / gereksinim sonrası / erişilemiyor
+- Şimdilik yalnızca scraping ile erişilebilenler güncellenir
 - Docker Compose ile tek komut deploy
 
 ## Teknoloji
