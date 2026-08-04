@@ -235,6 +235,128 @@ function App() {
     }
   }
 
+  async function deleteHistoryItem(id) {
+    setError(null)
+    setMessage(null)
+    setLoading(true)
+    try {
+      await api.deleteCalculation(id)
+      setMessage(`Kayıt #${id} silindi.`)
+      await loadHistory()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function deleteAllHistory() {
+    if (!window.confirm('Tüm hesaplama geçmişi silinsin mi?')) return
+    setError(null)
+    setMessage(null)
+    setLoading(true)
+    try {
+      const result = await api.deleteAllCalculations()
+      setMessage(`Tüm geçmiş silindi (${result.deleted || 0} kayıt).`)
+      setHistory([])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /** Geçmiş kaydındaki girdileri forma yükle */
+  function applyHistoryInputs(row) {
+    const inputs = row.inputs_json || {}
+    const slug = row.marketplace_slug || form.marketplaceSlug
+    setForm((prev) => ({
+      ...prev,
+      marketplaceSlug: slug || prev.marketplaceSlug,
+      categorySlug: row.category_slug || prev.categorySlug,
+      commissionRate:
+        inputs.commissionRate != null ? String(inputs.commissionRate) : prev.commissionRate,
+      commissionVatRate:
+        inputs.commissionVatRate != null ? Number(inputs.commissionVatRate) : prev.commissionVatRate,
+      productVatRate:
+        inputs.productVatRate != null ? Number(inputs.productVatRate) : prev.productVatRate,
+      salePrice: inputs.salePrice != null ? String(inputs.salePrice) : '',
+      productCost: inputs.productCost != null ? String(inputs.productCost) : '',
+      shippingCost: inputs.shippingCost != null ? String(inputs.shippingCost) : '',
+      adCost: inputs.adCost != null ? String(inputs.adCost) : '',
+      otherCost: inputs.otherCost != null ? String(inputs.otherCost) : '',
+    }))
+    if (row.results_json) setResults(row.results_json)
+  }
+
+  async function rerunFromHistory(row) {
+    setError(null)
+    setMessage(null)
+    setLoading(true)
+    try {
+      applyHistoryInputs(row)
+      const inputs = row.inputs_json || {}
+      const market =
+        marketplaces.find((m) => m.slug === row.marketplace_slug) ||
+        marketplaces.find((m) => m.id === row.marketplace_id)
+      if (!market) throw new Error('Pazaryeri bulunamadı')
+
+      const payload = {
+        salePrice: Number(inputs.salePrice),
+        productCost: Number(inputs.productCost || 0),
+        shippingCost: Number(inputs.shippingCost || 0),
+        adCost: Number(inputs.adCost || 0),
+        otherCost: Number(inputs.otherCost || 0),
+        commissionRate: Number(inputs.commissionRate),
+        commissionVatRate: Number(inputs.commissionVatRate ?? 20),
+        productVatRate: Number(inputs.productVatRate ?? 20),
+        baseType: inputs.baseType || market.base_type,
+      }
+      const data = await api.calculate(payload)
+      setSelectedMarketplace(market)
+      setResults(data.results)
+      setTab('calc')
+      setMessage('Geçmiş kayıt tekrar hesaplandı.')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function compareFromHistory(row) {
+    setError(null)
+    setMessage(null)
+    setLoading(true)
+    try {
+      applyHistoryInputs(row)
+      const inputs = row.inputs_json || {}
+      const ids =
+        compareIds.length > 0 ? compareIds : marketplaces.map((m) => m.id)
+      if (ids.length === 0) throw new Error('Karşılaştırılacak pazaryeri yok')
+
+      setCompareIds(ids)
+      const data = await api.compare({
+        salePrice: Number(inputs.salePrice),
+        productCost: Number(inputs.productCost || 0),
+        shippingCost: Number(inputs.shippingCost || 0),
+        adCost: Number(inputs.adCost || 0),
+        otherCost: Number(inputs.otherCost || 0),
+        commissionVatRate: Number(inputs.commissionVatRate ?? 20),
+        productVatRate: Number(inputs.productVatRate ?? 20),
+        marketplaceIds: ids,
+        categoryId: row.category_id || null,
+      })
+      setCompareRows(data.comparisons)
+      setTab('compare')
+      setMessage('Geçmiş girdilerle karşılaştırma tekrar çalıştırıldı.')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (tab === 'history') loadHistory()
   }, [tab])
@@ -660,9 +782,21 @@ function App() {
           <section className="panel">
             <div className="panel-head">
               <h2>Hesaplama geçmişi</h2>
-              <button type="button" className="ghost" onClick={loadHistory} disabled={loading}>
-                Yenile
-              </button>
+              <div className="actions">
+                <button type="button" className="ghost" onClick={loadHistory} disabled={loading}>
+                  Yenile
+                </button>
+                {history.length > 0 && (
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={deleteAllHistory}
+                    disabled={loading}
+                  >
+                    Tüm geçmişi sil
+                  </button>
+                )}
+              </div>
             </div>
             {history.length === 0 && <p className="muted">Henüz kayıt yok.</p>}
             {history.length > 0 && (
@@ -676,6 +810,7 @@ function App() {
                       <th>Satış</th>
                       <th>Net kâr</th>
                       <th>Marj</th>
+                      <th>İşlem</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -687,6 +822,34 @@ function App() {
                         <td>{formatMoney(row.inputs_json?.salePrice)}</td>
                         <td>{formatMoney(row.results_json?.netProfit)}</td>
                         <td>{formatPercent(row.results_json?.profitMargin)}</td>
+                        <td>
+                          <div className="row-actions">
+                            <button
+                              type="button"
+                              className="ghost"
+                              onClick={() => rerunFromHistory(row)}
+                              disabled={loading}
+                            >
+                              Tekrar hesapla
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost"
+                              onClick={() => compareFromHistory(row)}
+                              disabled={loading}
+                            >
+                              Karşılaştır
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost"
+                              onClick={() => deleteHistoryItem(row.id)}
+                              disabled={loading}
+                            >
+                              Sil
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

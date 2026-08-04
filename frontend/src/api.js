@@ -37,6 +37,10 @@ export const api = {
   saveCalculation: (body) =>
     request('/api/calculations', { method: 'POST', body: JSON.stringify(body) }),
   getCalculations: (limit = 20) => request(`/api/calculations?limit=${limit}`),
+  deleteCalculation: (id) =>
+    request(`/api/calculations/${id}`, { method: 'DELETE' }),
+  deleteAllCalculations: () =>
+    request('/api/calculations', { method: 'DELETE' }),
   health: () => request('/api/health'),
   userLogin: (email, password) =>
     request('/api/auth/login', {

@@ -80,4 +80,34 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// DELETE /api/calculations/:id — tek kaydı sil
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'Geçersiz id' });
+    }
+    const { rows } = await pool.query(
+      'DELETE FROM calculations WHERE id = $1 RETURNING id',
+      [id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Kayıt bulunamadı' });
+    }
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/calculations — tüm geçmişi sil
+router.delete('/', async (req, res, next) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM calculations');
+    res.json({ ok: true, deleted: rowCount });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
