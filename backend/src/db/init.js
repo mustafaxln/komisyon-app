@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('./pool');
+const { migrateMarketplaceAccess } = require('./migrate');
+const { syncMarketplaceSources } = require('./syncMarketplaceSources');
 
 async function runSqlFile(filePath) {
   const sql = fs.readFileSync(filePath, 'utf8');
@@ -27,9 +29,29 @@ async function ensureAdmin() {
   console.log(`Admin hazır: ${email}`);
 }
 
+async function ensureDemoUser() {
+  const email = (process.env.USER_EMAIL || 'user@komisyon.local').trim().toLowerCase();
+  const password = process.env.USER_PASSWORD || 'user123';
+  const name = process.env.USER_NAME || 'Demo Kullanıcı';
+  const hash = await bcrypt.hash(password, 10);
+
+  await pool.query(
+    `
+    INSERT INTO users (email, password_hash, name)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (email)
+    DO UPDATE SET password_hash = EXCLUDED.password_hash, name = EXCLUDED.name
+    `,
+    [email, hash, name]
+  );
+
+  console.log(`Kullanıcı hazır: ${email}`);
+}
+
 async function main() {
   try {
     await runSqlFile(path.join(__dirname, 'schema.sql'));
+    await migrateMarketplaceAccess();
 
     const existing = await pool.query('SELECT COUNT(*)::int AS count FROM marketplaces');
     const force =
@@ -43,11 +65,24 @@ async function main() {
       console.log('Seed atlandı (pazaryeri verisi mevcut). Yenilemek için: npm run db:init -- --force');
     }
 
+    // Seed'den bağımsız: URL/grupları ve yeni unavailable pazaryerlerini senkronize et
+    await syncMarketplaceSources();
+
+
     await ensureAdmin();
+    await ensureDemoUser();
 
     const markets = await pool.query('SELECT COUNT(*)::int AS count FROM marketplaces');
     const rates = await pool.query('SELECT COUNT(*)::int AS count FROM commission_rates');
+    const byStatus = await pool.query(
+      `SELECT update_status, COUNT(*)::int AS count
+       FROM marketplaces GROUP BY update_status ORDER BY update_status`
+    );
     console.log(`DB hazır: ${markets.rows[0].count} pazaryeri, ${rates.rows[0].count} komisyon oranı`);
+    console.log(
+      'Erişim grupları:',
+      byStatus.rows.map((r) => `${r.update_status}=${r.count}`).join(', ')
+    );
   } catch (err) {
     console.error('DB init hatası:', err.message);
     process.exitCode = 1;

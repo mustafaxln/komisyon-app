@@ -8,6 +8,18 @@ CREATE TABLE IF NOT EXISTS marketplaces (
   base_type VARCHAR(20) NOT NULL CHECK (base_type IN ('ex_vat', 'inc_vat')),
   region VARCHAR(50) NOT NULL DEFAULT 'global',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  -- Komisyon güncelleme erişim grubu (AI yok; web scraping odaklı)
+  -- scrape_ready  : doğrudan scraping ile güncellenebilir
+  -- auth_required : önce pazaryeri girişi, sonra scraping
+  -- unavailable   : scraping ile erişilemiyor / güncellenemiyor
+  update_status VARCHAR(30) NOT NULL DEFAULT 'unavailable'
+    CHECK (update_status IN ('scrape_ready', 'auth_required', 'unavailable')),
+  scrape_url TEXT,
+  scrape_notes TEXT,
+  auth_status VARCHAR(20) NOT NULL DEFAULT 'none'
+    CHECK (auth_status IN ('none', 'pending', 'authenticated', 'failed')),
+  last_scraped_at TIMESTAMPTZ,
+  last_scrape_message TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -44,5 +56,27 @@ CREATE TABLE IF NOT EXISTS admins (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Uygulama kullanıcıları (hesaplayıcı girişi)
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(150),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Pazaryeri satıcı paneli kimlik bilgileri (auth_required grubu)
+CREATE TABLE IF NOT EXISTS marketplace_credentials (
+  id SERIAL PRIMARY KEY,
+  marketplace_id INTEGER NOT NULL UNIQUE REFERENCES marketplaces(id) ON DELETE CASCADE,
+  username VARCHAR(255) NOT NULL,
+  secret_encrypted TEXT NOT NULL,
+  auth_meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+  authenticated_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_commission_rates_marketplace ON commission_rates(marketplace_id);
 CREATE INDEX IF NOT EXISTS idx_calculations_created_at ON calculations(created_at DESC);
+-- update_status index'i migrate.js içinde (eski DB'de kolon yokken schema patlamasın)
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

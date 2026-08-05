@@ -1,12 +1,15 @@
 const express = require('express');
 const { pool } = require('../db/pool');
+const { listGroupedMarketplaces } = require('../services/scrapeService');
 
 const router = express.Router();
 
 router.get('/', async (_req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, name, slug, base_type, region, is_active
+      `SELECT id, name, slug, base_type, region, is_active,
+              update_status, scrape_url, scrape_notes,
+              auth_status, last_scraped_at, last_scrape_message
        FROM marketplaces
        WHERE is_active = TRUE
        ORDER BY
@@ -19,10 +22,22 @@ router.get('/', async (_req, res, next) => {
   }
 });
 
+/** PM gruplaması: scrape_ready / auth_required / unavailable */
+router.get('/access-groups', async (_req, res, next) => {
+  try {
+    const data = await listGroupedMarketplaces();
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/:slug', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, name, slug, base_type, region, is_active
+      `SELECT id, name, slug, base_type, region, is_active,
+              update_status, scrape_url, scrape_notes,
+              auth_status, last_scraped_at, last_scrape_message
        FROM marketplaces
        WHERE slug = $1`,
       [req.params.slug]

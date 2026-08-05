@@ -18,7 +18,7 @@ async function request(path, options = {}) {
 
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    throw new Error(data.error || `İstek başarısız (${res.status})`)
+    throw new Error(data.error || data.message || `İstek başarısız (${res.status})`)
   }
   return data
 }
@@ -37,7 +37,22 @@ export const api = {
   saveCalculation: (body) =>
     request('/api/calculations', { method: 'POST', body: JSON.stringify(body) }),
   getCalculations: (limit = 20) => request(`/api/calculations?limit=${limit}`),
+  deleteCalculation: (id) =>
+    request(`/api/calculations/${id}`, { method: 'DELETE' }),
+  deleteAllCalculations: () =>
+    request('/api/calculations', { method: 'DELETE' }),
   health: () => request('/api/health'),
+  userLogin: (email, password) =>
+    request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  userRegister: (email, password, name) =>
+    request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    }),
+  userMe: (token) => request('/api/auth/me', { token }),
   adminLogin: (email, password) =>
     request('/api/admin/login', {
       method: 'POST',
@@ -62,4 +77,32 @@ export const api = {
     }),
   adminDeleteRate: (token, id) =>
     request(`/api/admin/rates/${id}`, { method: 'DELETE', token }),
+  getAccessGroups: () => request('/api/marketplaces/access-groups'),
+  adminAccessGroups: (token) =>
+    request('/api/admin/marketplaces/access-groups', { token }),
+  adminScrapeAll: (token) =>
+    request('/api/admin/marketplaces/scrape-all', { method: 'POST', token, body: '{}' }),
+  adminScrapeMarketplace: (token, slug, body = {}) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/scrape`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  adminMarketplaceAuth: (token, slug, body) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/auth`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  adminClearMarketplaceAuth: (token, slug) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/auth`, {
+      method: 'DELETE',
+      token,
+    }),
+  adminSetMarketplaceStatus: (token, slug, body) =>
+    request(`/api/admin/marketplaces/${encodeURIComponent(slug)}/status`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify(body),
+    }),
 }

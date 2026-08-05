@@ -9,6 +9,7 @@ const ratesRouter = require('./routes/rates');
 const calculateRouter = require('./routes/calculate');
 const calculationsRouter = require('./routes/calculations');
 const adminRouter = require('./routes/admin');
+const authRouter = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +36,7 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
+app.use('/api/auth', authRouter);
 app.use('/api/marketplaces', marketplacesRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/rates', ratesRouter);

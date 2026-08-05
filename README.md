@@ -18,7 +18,8 @@ docker compose up --build
 
 **Admin:** http://localhost:3000/admin  
 E-posta: `admin@komisyon.local` · Şifre: `admin123`  
-(Ana hesaplayıcıda Admin sekmesi yoktur; adres elle yazılır.)
+
+**Kullanıcı (hesaplayıcı girişi):** `user@komisyon.local` · `user123`
 
 İlk açılışta tablolar + seed + admin otomatik oluşur. Seed’i sıfırdan yenilemek için:
 
@@ -51,6 +52,10 @@ cd frontend && npm install && npm run dev
 - Pazaryeri karşılaştırma tablosu
 - Hesaplama geçmişi
 - Admin ile komisyon preset güncelleme / ekleme / silme
+- Kullanıcı girişi / kayıt (hesaplayıcı)
+- **24 pazaryeri**, erişim grupları: scraping ile güncellenebilir / doğrudan erişilemiyor
+- Kamuya açık HTML + PDF kaynaklarından scraping (Amazon TR, HB PDF, Çiçeksepeti PDF, Kaufland, Walmart, Ozon…)
+- Şimdilik yalnızca `scrape_ready` grubu güncellenir; Trendyol / Otto / Temu / About You / Wayfair / Idefix ayrı grupta
 - Docker Compose ile tek komut deploy
 
 ## Teknoloji
@@ -69,6 +74,7 @@ cd frontend && npm install && npm run dev
 |-------|--------|
 | [docs/TEKNIK-DOKUMAN.md](./docs/TEKNIK-DOKUMAN.md) | Mimari, API, formüller, Docker |
 | [docs/PM-MESAJI.md](./docs/PM-MESAJI.md) | PM kapsam mesajı |
+| [docs/PM-SCRAPING-GRUPLAMA.md](./docs/PM-SCRAPING-GRUPLAMA.md) | AI kaldırıldı; scraping erişim grupları |
 | [docs/YOL-HARITASI.md](./docs/YOL-HARITASI.md) | 5 günlük plan |
 | [docs/OGRENME-DEFTERI.md](./docs/OGRENME-DEFTERI.md) | Genel öğrenme notları |
 | [docs/BACKEND-OGRENME.md](./docs/BACKEND-OGRENME.md) | Backend satır satır |
