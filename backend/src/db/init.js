@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { pool } = require('./pool');
 const { migrateMarketplaceAccess } = require('./migrate');
+const { syncMarketplaceSources } = require('./syncMarketplaceSources');
 
 async function runSqlFile(filePath) {
   const sql = fs.readFileSync(filePath, 'utf8');
@@ -63,6 +64,10 @@ async function main() {
     } else {
       console.log('Seed atlandı (pazaryeri verisi mevcut). Yenilemek için: npm run db:init -- --force');
     }
+
+    // Seed'den bağımsız: URL/grupları ve yeni unavailable pazaryerlerini senkronize et
+    await syncMarketplaceSources();
+
 
     await ensureAdmin();
     await ensureDemoUser();

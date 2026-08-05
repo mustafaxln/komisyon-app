@@ -1,0 +1,50 @@
+/**
+ * Ortak kategori anahtar kelimeleri (TR/EN) → bizim category slug.
+ * PDF / uzun HTML tabloları için.
+ */
+
+const CATEGORY_RULES = [
+  { categorySlug: 'giyim', keywords: ['Giyim', 'Clothing', 'Apparel', 'Kıyafet', 'Üst giyim'] },
+  { categorySlug: 'ayakkabi', keywords: ['Ayakkabı', 'Ayakkabi', 'Footwear', 'Shoes'] },
+  { categorySlug: 'canta', keywords: ['Çanta', 'Canta', 'Valiz', 'Luggage', 'Handbags', 'Bags'] },
+  { categorySlug: 'taki', keywords: ['Takı', 'Taki', 'Mücevher', 'Jewellery', 'Jewelry'] },
+  { categorySlug: 'saat', keywords: ['Saat', 'Watches', 'Kol Saat'] },
+  { categorySlug: 'aksesuar', keywords: ['Aksesuar', 'Accessories'] },
+  { categorySlug: 'telefon', keywords: ['Cep Telefonu', 'Akıllı telefon', 'Cell Phone', 'Smartphone'] },
+  { categorySlug: 'telefon-aksesuari', keywords: ['Telefon aksesuar', 'Phone Accessories'] },
+  { categorySlug: 'tablet', keywords: ['Tablet', 'Ipad'] },
+  { categorySlug: 'laptop', keywords: ['Laptop', 'Bilgisayar', 'Computers', 'Dizüstü', 'Diz üstü'] },
+  { categorySlug: 'bilgisayar-parcalari', keywords: ['Bilgisayar bileşen', 'PC ve dizüstü', 'Computer Components'] },
+  { categorySlug: 'televizyon', keywords: ['Televizyon', 'TV', 'Television'] },
+  { categorySlug: 'oyun-konsolu', keywords: ['Oyun Konsol', 'Video Game Console', 'Konsol'] },
+  { categorySlug: 'oyun-aksesuari', keywords: ['Video Oyun', 'Oyun aksesuar', 'Video Games'] },
+  { categorySlug: 'tuketici-elektronigi', keywords: ['Elektronik', 'Consumer Electronics', 'Ev Eğlence'] },
+  { categorySlug: 'elektronik-aksesuar', keywords: ['Elektronik Aksesuar', 'Electronics Accessories'] },
+  { categorySlug: 'beyaz-esya', keywords: ['Beyaz Eşya', 'Beyaz Esya', 'Large Appliances', 'büyük ev aletleri'] },
+  { categorySlug: 'kucuk-ev-aletleri', keywords: ['Küçük Ev Alet', 'Kucuk Ev', 'Small Appliances', 'küçük ev aletleri'] },
+  { categorySlug: 'ev-tekstili', keywords: ['Ev tekstil', 'Home Textile'] },
+  { categorySlug: 'mobilya', keywords: ['Mobilya', 'Furniture'] },
+  { categorySlug: 'ev-mutfak', keywords: ['Mutfak', 'Kitchen', 'Ev & Yaşam', 'Home & Kitchen'] },
+  { categorySlug: 'aydinlatma', keywords: ['Aydınlatma', 'Aydinlatma', 'Lighting', 'Lamps'] },
+  { categorySlug: 'bahce', keywords: ['Bahçe', 'Bahce', 'Garden', 'Lawn'] },
+  { categorySlug: 'yapi-market', keywords: ['Yapı Market', 'Yapi Market', 'DIY', 'Tools & garden'] },
+  { categorySlug: 'kozmetik', keywords: ['Kozmetik', 'Beauty', 'Güzellik'] },
+  { categorySlug: 'parfum', keywords: ['Parfüm', 'Parfum', 'Perfume'] },
+  { categorySlug: 'kisisel-bakim', keywords: ['Kişisel Bakım', 'Personal Care', 'Sağlık ve Kişisel'] },
+  { categorySlug: 'anne-bebek', keywords: ['Anne & Bebek', 'Bebek', 'Baby'] },
+  { categorySlug: 'oyuncak', keywords: ['Oyuncak', 'Toys'] },
+  { categorySlug: 'pet', keywords: ['Evcil Hayvan', 'Pet'] },
+  { categorySlug: 'gida', keywords: ['Gıda', 'Gida', 'Grocery', 'Food'] },
+  { categorySlug: 'spor', keywords: ['Spor', 'Sports', 'Fitness'] },
+  { categorySlug: 'otomotiv', keywords: ['Otomotiv', 'Oto ', 'Automotive', 'Cars and Motorbikes'] },
+  { categorySlug: 'kitap', keywords: ['Kitap', 'Books', 'Media'] },
+  { categorySlug: 'kirtasiye', keywords: ['Ofis', 'Office', 'Kırtasiye'] },
+  { categorySlug: 'muzik-aletleri', keywords: ['Müzik', 'Musical'] },
+  { categorySlug: 'endustriyel', keywords: ['Endüstriyel', 'Industrial'] },
+  { categorySlug: 'handmade', keywords: ['Handmade', 'El yapımı'] },
+  { categorySlug: 'dijital', keywords: ['Yazılım', 'Software', 'Dijital ürün'] },
+  { categorySlug: 'hediye-karti', keywords: ['Hediye Kart', 'Gift Card'] },
+  { categorySlug: 'genel', keywords: ['Diğer', 'Other', 'All other', 'Everything Else', 'Genel'] },
+];
+
+module.exports = { CATEGORY_RULES };

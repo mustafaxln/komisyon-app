@@ -53,8 +53,9 @@ cd frontend && npm install && npm run dev
 - Hesaplama geçmişi
 - Admin ile komisyon preset güncelleme / ekleme / silme
 - Kullanıcı girişi / kayıt (hesaplayıcı)
-- **20 pazaryeri**, erişim grupları: scraping ile güncellenebilir / gereksinim sonrası / erişilemiyor
-- Şimdilik yalnızca scraping ile erişilebilenler güncellenir
+- **24 pazaryeri**, erişim grupları: scraping ile güncellenebilir / doğrudan erişilemiyor
+- Kamuya açık HTML + PDF kaynaklarından scraping (Amazon TR, HB PDF, Çiçeksepeti PDF, Kaufland, Walmart, Ozon…)
+- Şimdilik yalnızca `scrape_ready` grubu güncellenir; Trendyol / Otto / Temu / About You / Wayfair / Idefix ayrı grupta
 - Docker Compose ile tek komut deploy
 
 ## Teknoloji

@@ -1,39 +1,26 @@
 /**
- * Shopify — kamuya açık Shopify Payments işlem ücreti (Basic plan ~%2.9).
+ * Shopify TR fiyatlandırma — https://www.shopify.com/tr/pricing
+ * Payments oranı bazen gizli; üçüncü taraf ödeme %'si veya bilinen Basic ~%2.9.
  */
 
+const { fetchHtml, htmlToText, parsePercent, successResult } = require('./_shared');
+
 const PUBLIC_PAYMENTS_FEE = 2.9;
-const DEFAULT_URL = 'https://www.shopify.com/pricing';
+const DEFAULT_URL = 'https://www.shopify.com/tr/pricing';
 
-async function fetchText(url) {
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (compatible; KomisyonHesaplayici/1.0; +https://localhost; commission-rate-bot)',
-      Accept: 'text/html,application/xhtml+xml',
-    },
-    redirect: 'follow',
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) {
-    const err = new Error(`HTTP ${res.status}`);
-    err.status = res.status;
-    throw err;
-  }
-  return res.text();
-}
-
-function parseFee(html) {
+function parseFee(text) {
   const patterns = [
-    /(?:online|credit\s*card|card)\s*(?:rates?|fees?)[^%]{0,60}?(\d+[.,]\d+)\s*%/i,
-    /(\d+[.,]\d+)\s*%\s*\+\s*\$?\s*0[.,]30/i,
+    /üçüncü taraf ödeme sağlayıcıları için\s*%?\s*(\d+[.,]\d+|\d+)/i,
+    /third[- ]party[^%]{0,40}?(\d+[.,]\d+)\s*%/i,
     /shopify\s*payments[^%]{0,80}?(\d+[.,]\d+)\s*%/i,
+    /online credit card rates?[^%]{0,40}?(\d+[.,]\d+)\s*%/i,
+    /(\d+[.,]\d+)\s*%\s*\+\s*\$?\s*0[.,]30/i,
   ];
   for (const re of patterns) {
-    const m = html.match(re);
+    const m = text.match(re);
     if (m) {
-      const n = Number(String(m[1]).replace(',', '.'));
-      if (Number.isFinite(n) && n > 0 && n < 15) return n;
+      const n = parsePercent(m[1]);
+      if (n != null && n < 15) return n;
     }
   }
   return null;
@@ -44,33 +31,31 @@ async function scrape({ url, forceFallback } = {}) {
 
   if (!forceFallback) {
     try {
-      const html = await fetchText(target);
-      const parsed = parseFee(html);
+      const text = htmlToText(await fetchHtml(target));
+      const parsed = parseFee(text);
       if (parsed != null) {
-        return {
-          ok: true,
+        return successResult({
           source: target,
-          message: `Shopify Payments ücreti sayfadan okundu: %${parsed}`,
+          message: `Shopify ödeme/işlem ücreti sayfadan okundu: %${parsed}`,
           rates: [
             {
               categorySlug: 'genel',
               ratePercent: parsed,
               applyToAll: true,
-              sourceNote: `Shopify scraping (${target}) — Payments Basic`,
+              sourceNote: `Shopify scraping (${target})`,
             },
           ],
-        };
+        });
       }
     } catch (_err) {
       // fallback
     }
   }
 
-  return {
-    ok: true,
+  return successResult({
     usedFallback: true,
     source: 'public-known-fee',
-    message: `Shopify sayfası parse edilemedi; kamuya açık bilinen Payments ücreti kullanıldı: %${PUBLIC_PAYMENTS_FEE}`,
+    message: `Shopify sayfası tam parse edilemedi; bilinen Payments Basic ücreti kullanıldı: %${PUBLIC_PAYMENTS_FEE}`,
     rates: [
       {
         categorySlug: 'genel',
@@ -79,7 +64,7 @@ async function scrape({ url, forceFallback } = {}) {
         sourceNote: 'Shopify scraping fallback — Payments Basic ~%2.9',
       },
     ],
-  };
+  });
 }
 
 module.exports = { scrape };

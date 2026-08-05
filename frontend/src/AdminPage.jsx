@@ -4,6 +4,7 @@ import { api } from './api'
 import './App.css'
 
 const TOKEN_KEY = 'komisyon_admin_token'
+const RATES_PAGE_SIZE = 20
 
 const STATUS_BADGE = {
   scrape_ready: 'badge-ready',
@@ -29,6 +30,7 @@ export default function AdminPage() {
   const [rates, setRates] = useState([])
   const [filterMarketId, setFilterMarketId] = useState('')
   const [search, setSearch] = useState('')
+  const [ratesPage, setRatesPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [drafts, setDrafts] = useState({})
   const [message, setMessage] = useState(null)
@@ -46,6 +48,24 @@ export default function AdminPage() {
       )
     })
   }, [rates, filterMarketId, search])
+
+  const ratesTotalPages = Math.max(1, Math.ceil(filteredRates.length / RATES_PAGE_SIZE))
+  const safeRatesPage = Math.min(ratesPage, ratesTotalPages)
+
+  const pagedRates = useMemo(() => {
+    const start = (safeRatesPage - 1) * RATES_PAGE_SIZE
+    return filteredRates.slice(start, start + RATES_PAGE_SIZE)
+  }, [filteredRates, safeRatesPage])
+
+  const ratesPageNumbers = useMemo(() => {
+    const total = ratesTotalPages
+    const current = safeRatesPage
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+    const pages = new Set([1, total, current, current - 1, current + 1])
+    if (current <= 3) [2, 3, 4].forEach((p) => pages.add(p))
+    if (current >= total - 2) [total - 3, total - 2, total - 1].forEach((p) => pages.add(p))
+    return [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b)
+  }, [ratesTotalPages, safeRatesPage])
 
   async function loadAll(activeToken = token) {
     if (!activeToken) return
@@ -230,7 +250,7 @@ export default function AdminPage() {
             {accessGroups?.totals && (
               <p className="hint">
                 Doğrudan: {accessGroups.totals.scrape_ready} · Giriş gerekli:{' '}
-                {accessGroups.totals.auth_required} · Güncellenemiyor:{' '}
+                {accessGroups.totals.auth_required} · Doğrudan erişilemiyor:{' '}
                 {accessGroups.totals.unavailable}
               </p>
             )}
@@ -297,8 +317,8 @@ export default function AdminPage() {
 
                       {group.key === 'unavailable' && (
                         <p className="hint">
-                          Scraping ile erişilemiyor. Şimdilik işimiz yok — sadece gruplandı. Oranlar
-                          manuel kalır.
+                          Kamuya açık komisyon kaynağı yok veya engelli. Oranlar manuel kalır;
+                          admin panelinden güncelleyebilirsiniz.
                         </p>
                       )}
                     </div>
@@ -316,7 +336,13 @@ export default function AdminPage() {
             <div className="row">
               <label>
                 Pazaryeri
-                <select value={filterMarketId} onChange={(e) => setFilterMarketId(e.target.value)}>
+                <select
+                  value={filterMarketId}
+                  onChange={(e) => {
+                    setFilterMarketId(e.target.value)
+                    setRatesPage(1)
+                  }}
+                >
                   <option value="">Tümü</option>
                   {marketplaces.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -332,12 +358,18 @@ export default function AdminPage() {
                   type="search"
                   placeholder="ör. giyim, telefon…"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value)
+                    setRatesPage(1)
+                  }}
                 />
               </label>
             </div>
 
-            <p className="hint">{filteredRates.length} kayıt listeleniyor</p>
+            <p className="hint">
+              {filteredRates.length} kayıt · sayfa {safeRatesPage}/{ratesTotalPages} · sayfada{' '}
+              {pagedRates.length} satır
+            </p>
 
             <div className="table-wrap">
               <table>
@@ -351,7 +383,14 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRates.map((row) => (
+                  {pagedRates.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="muted">
+                        Filtreye uyan kayıt yok.
+                      </td>
+                    </tr>
+                  )}
+                  {pagedRates.map((row) => (
                     <tr key={row.id}>
                       <td>{row.marketplace_name}</td>
                       <td>{row.category_name}</td>
@@ -392,6 +431,46 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+
+            {filteredRates.length > RATES_PAGE_SIZE && (
+              <nav className="pagination" aria-label="Oran listesi sayfalama">
+                <button
+                  type="button"
+                  className="ghost"
+                  disabled={safeRatesPage <= 1}
+                  onClick={() => setRatesPage((p) => Math.max(1, p - 1))}
+                >
+                  ← Önceki
+                </button>
+                <div className="pagination-pages">
+                  {ratesPageNumbers.map((pageNum, idx) => {
+                    const prev = ratesPageNumbers[idx - 1]
+                    const showGap = prev != null && pageNum - prev > 1
+                    return (
+                      <span key={pageNum} className="pagination-item">
+                        {showGap && <span className="pagination-ellipsis">…</span>}
+                        <button
+                          type="button"
+                          className={pageNum === safeRatesPage ? 'page-btn is-active' : 'page-btn ghost'}
+                          onClick={() => setRatesPage(pageNum)}
+                          aria-current={pageNum === safeRatesPage ? 'page' : undefined}
+                        >
+                          {pageNum}
+                        </button>
+                      </span>
+                    )
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="ghost"
+                  disabled={safeRatesPage >= ratesTotalPages}
+                  onClick={() => setRatesPage((p) => Math.min(ratesTotalPages, p + 1))}
+                >
+                  Sonraki →
+                </button>
+              </nav>
+            )}
           </section>
         </>
       )}

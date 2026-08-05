@@ -1,73 +1,73 @@
--- Seed: 20 pazaryeri (Wisersell / TR+global kapsam)
--- Oranlar tipik değerlerdir; scrape_ready olanlar web scraping ile güncellenir.
--- auth_required / unavailable grupları şimdilik sadece listelenir (iş yapılmaz).
+-- Seed: pazaryerleri (TR + global)
+-- scrape_ready → kamuya açık HTML/PDF scraping
+-- unavailable  → doğrudan erişilemiyor (Trendyol, Otto, Temu, About You, Wayfair, Idefix + kaynak yoklar)
 
 TRUNCATE commission_rates, calculations, marketplace_credentials, categories, marketplaces, admins, users RESTART IDENTITY CASCADE;
 
--- update_status:
---   scrape_ready  → web scraping ile doğrudan güncelle (şimdi işimiz bunlar)
---   auth_required → belirli giriş/gereksinim sonrası erişilebilir (şimdilik dokunulmaz)
---   unavailable   → hiç erişilemiyor (şimdilik dokunulmaz)
 INSERT INTO marketplaces (name, slug, base_type, region, update_status, scrape_url, scrape_notes, auth_status) VALUES
-  -- scrape_ready
-  ('Amazon', 'amazon', 'inc_vat', 'global', 'scrape_ready',
-   'https://sellercentral.amazon.com/help/hub/reference/G200336920',
-   'Kamuya açık referral fee — scraping ile güncellenir.', 'none'),
+  -- scrape_ready (kullanıcının bulduğu kamuya açık kaynaklar)
+  ('Amazon', 'amazon', 'inc_vat', 'tr', 'scrape_ready',
+   'https://satis.amazon.com.tr/ucretlendirme',
+   'Amazon TR ücretlendirme — kategori komisyon tablosu.', 'none'),
   ('Etsy', 'etsy', 'inc_vat', 'global', 'scrape_ready',
    'https://www.etsy.com/sell',
-   'Kamuya açık işlem ücreti — scraping ile güncellenir.', 'none'),
+   'Etsy satış/ücret özeti — işlem ücreti.', 'none'),
   ('Shopify', 'shopify', 'inc_vat', 'global', 'scrape_ready',
-   'https://www.shopify.com/pricing',
-   'Kamuya açık Payments ücreti — scraping ile güncellenir.', 'none'),
+   'https://www.shopify.com/tr/pricing',
+   'Shopify TR fiyatlandırma — ödeme/işlem ücreti.', 'none'),
   ('eBay', 'ebay', 'inc_vat', 'global', 'scrape_ready',
-   'https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees',
-   'Kamuya açık selling fees — scraping ile güncellenir.', 'none'),
-  -- auth_required (şimdilik gruplanır, scraping yapılmaz)
-  ('Trendyol', 'trendyol', 'ex_vat', 'tr', 'auth_required',
-   'https://partner.trendyol.com/',
-   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Hepsiburada', 'hepsiburada', 'inc_vat', 'tr', 'auth_required',
-   'https://merchant.hepsiburada.com/',
-   'Merchant paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('N11', 'n11', 'ex_vat', 'tr', 'auth_required',
-   'https://so.n11.com/',
-   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Pazarama', 'pazarama', 'inc_vat', 'tr', 'auth_required',
-   'https://www.pazarama.com/',
-   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Çiçeksepeti', 'ciceksepeti', 'inc_vat', 'tr', 'auth_required',
-   'https://www.ciceksepeti.com/',
-   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('ePttAVM', 'epttavm', 'inc_vat', 'tr', 'auth_required',
-   'https://www.pttavm.com/',
-   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Walmart', 'walmart', 'inc_vat', 'global', 'auth_required',
-   'https://marketplace.walmart.com/',
-   'Seller Center girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Bol.com', 'bol', 'inc_vat', 'global', 'auth_required',
-   'https://partner.bol.com/',
-   'Partner paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('TikTok Shop', 'tiktok-shop', 'inc_vat', 'global', 'auth_required',
-   'https://seller.tiktok.com/',
-   'Seller Center girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Kaufland', 'kaufland', 'inc_vat', 'global', 'auth_required',
-   'https://sellerportal.kaufland.com/',
-   'Seller portal girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Allegro', 'allegro', 'inc_vat', 'global', 'auth_required',
-   'https://allegro.pl/',
-   'Satıcı paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  ('Ozon', 'ozon', 'inc_vat', 'global', 'auth_required',
-   'https://seller.ozon.ru/',
-   'Seller paneli girişi gerekir. Şimdilik güncellenmez.', 'pending'),
-  -- unavailable
-  ('Wish', 'wish', 'inc_vat', 'global', 'unavailable',
-   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none'),
-  ('Fruugo', 'fruugo', 'inc_vat', 'global', 'unavailable',
-   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none'),
-  ('OnBuy', 'onbuy', 'inc_vat', 'global', 'unavailable',
-   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none'),
+   'https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4822',
+   'eBay selling fees (captcha olabilir → fallback).', 'none'),
+  ('Hepsiburada', 'hepsiburada', 'inc_vat', 'tr', 'scrape_ready',
+   'https://images.hepsiburada.net/mp/mp-cms/1625757354638_kategori-bazli-komisyon-oranlari-listesi.pdf',
+   'Hepsiburada kategori komisyon PDF.', 'none'),
+  ('Çiçeksepeti', 'ciceksepeti', 'inc_vat', 'tr', 'scrape_ready',
+   'https://cdn03.ciceksepeti.com/editor/image/Guncel_Komisyon_ve_Vade-2023-11-16.pdf',
+   'Çiçeksepeti güncel komisyon PDF.', 'none'),
+  ('N11', 'n11', 'ex_vat', 'tr', 'scrape_ready',
+   'https://magazadestek.n11.com/s/komisyon-oranlari',
+   'N11 komisyon yardım sayfası (Cloudflare engeli olabilir).', 'none'),
+  ('Pazarama', 'pazarama', 'inc_vat', 'tr', 'scrape_ready',
+   'https://isortagim.pazarama.com/static-pages/pazarama-comission-rate-list',
+   'Pazarama İş Ortağım komisyon listesi (SPA olabilir).', 'none'),
+  ('Bol.com', 'bol', 'inc_vat', 'global', 'scrape_ready',
+   'https://partnerplatform.bol.com/en/idp/commission',
+   'Bol.com partner commission sayfası.', 'none'),
+  ('Ozon', 'ozon', 'inc_vat', 'global', 'scrape_ready',
+   'https://www.sentos.com.tr/ozon-komisyon-oranlari-guncel-liste/',
+   'Ozon komisyon özeti (kamuya açık derleme).', 'none'),
+  ('Kaufland', 'kaufland', 'inc_vat', 'global', 'scrape_ready',
+   'https://www.kauflandglobalmarketplace.com/en/conditions/',
+   'Kaufland Global Marketplace conditions tablosu.', 'none'),
+  ('Walmart', 'walmart', 'inc_vat', 'global', 'scrape_ready',
+   'https://marketplace.walmart.com/pricing/',
+   'Walmart Marketplace referral fee pricing.', 'none'),
+
+  -- unavailable: doğrudan erişilemeyenler (kullanıcı listesi + kaynak yok)
+  ('Trendyol', 'trendyol', 'ex_vat', 'tr', 'unavailable',
+   NULL, 'Doğrudan erişilemiyor — satıcı paneli / kapalı kaynak. Manuel.', 'none'),
+  ('Otto', 'otto', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Doğrudan erişilemiyor — kamuya açık komisyon kaynağı yok.', 'none'),
+  ('Temu', 'temu', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Doğrudan erişilemiyor — kamuya açık komisyon kaynağı yok.', 'none'),
+  ('About You', 'about-you', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Doğrudan erişilemiyor — kamuya açık komisyon kaynağı yok.', 'none'),
   ('Wayfair', 'wayfair', 'inc_vat', 'global', 'unavailable',
-   NULL, 'Scraping ile güvenilir erişim yok. Şimdilik güncellenmez.', 'none');
+   NULL, 'Doğrudan erişilemiyor — kamuya açık komisyon kaynağı yok.', 'none'),
+  ('Idefix', 'idefix', 'inc_vat', 'tr', 'unavailable',
+   NULL, 'Doğrudan erişilemiyor — kamuya açık komisyon kaynağı yok.', 'none'),
+  ('ePttAVM', 'epttavm', 'inc_vat', 'tr', 'unavailable',
+   NULL, 'Güvenilir kamuya açık komisyon kaynağı yok. Manuel.', 'none'),
+  ('TikTok Shop', 'tiktok-shop', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Güvenilir kamuya açık komisyon kaynağı yok. Manuel.', 'none'),
+  ('Allegro', 'allegro', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Güvenilir kamuya açık komisyon kaynağı yok. Manuel.', 'none'),
+  ('Wish', 'wish', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Güvenilir kamuya açık komisyon kaynağı yok. Manuel.', 'none'),
+  ('Fruugo', 'fruugo', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Güvenilir kamuya açık komisyon kaynağı yok. Manuel.', 'none'),
+  ('OnBuy', 'onbuy', 'inc_vat', 'global', 'unavailable',
+   NULL, 'Güvenilir kamuya açık komisyon kaynağı yok. Manuel.', 'none');
 
 -- Ortak / geniş ürün kategorileri (slug benzersiz)
 INSERT INTO categories (name, slug) VALUES
@@ -302,25 +302,30 @@ CROSS JOIN categories c
 WHERE m.slug = 'ebay';
 
 -- ========== DİĞER PAZARYERLERİ (tipik genel oran — tüm kategoriler) ==========
--- auth_required / unavailable: seed preset; scraping şimdilik uygulanmaz
+-- scrape_ready olanlar ilk seed sonrası admin scraping ile güncellenir
+-- unavailable: seed preset; manuel
 INSERT INTO commission_rates (marketplace_id, category_id, rate_percent, source_note)
 SELECT m.id, c.id, d.rate, d.note
 FROM marketplaces m
 JOIN (
   VALUES
-    ('n11', 12.000, 'N11 tipik kategori komisyonu (seed; panel teyidi gerekir)'),
-    ('pazarama', 12.000, 'Pazarama tipik komisyon (seed; panel teyidi gerekir)'),
-    ('ciceksepeti', 15.000, 'Çiçeksepeti tipik komisyon (seed; panel teyidi gerekir)'),
-    ('epttavm', 10.000, 'ePttAVM tipik komisyon (seed; panel teyidi gerekir)'),
-    ('walmart', 15.000, 'Walmart Marketplace tipik referral (seed)'),
-    ('bol', 15.000, 'Bol.com tipik commission (seed)'),
-    ('tiktok-shop', 8.000, 'TikTok Shop tipik commission (seed)'),
-    ('kaufland', 14.000, 'Kaufland tipik commission (seed)'),
-    ('allegro', 12.000, 'Allegro tipik commission (seed)'),
-    ('ozon', 15.000, 'Ozon tipik commission (seed)'),
-    ('wish', 15.000, 'Wish tipik (erişilemiyor — seed only)'),
-    ('fruugo', 15.000, 'Fruugo tipik (erişilemiyor — seed only)'),
-    ('onbuy', 12.000, 'OnBuy tipik (erişilemiyor — seed only)'),
-    ('wayfair', 15.000, 'Wayfair tipik (erişilemiyor — seed only)')
+    ('n11', 12.000, 'N11 tipik (seed; scraping ile güncellenir)'),
+    ('pazarama', 12.000, 'Pazarama tipik (seed; scraping ile güncellenir)'),
+    ('ciceksepeti', 20.000, 'Çiçeksepeti tipik (seed; PDF scraping ile güncellenir)'),
+    ('walmart', 15.000, 'Walmart tipik referral (seed; scraping ile güncellenir)'),
+    ('bol', 15.000, 'Bol.com tipik (seed; scraping ile güncellenir)'),
+    ('kaufland', 13.000, 'Kaufland tipik (seed; scraping ile güncellenir)'),
+    ('ozon', 5.000, 'Ozon tipik TR satıcı (seed; scraping ile güncellenir)'),
+    ('epttavm', 10.000, 'ePttAVM tipik (erişilemiyor — seed)'),
+    ('tiktok-shop', 8.000, 'TikTok Shop tipik (erişilemiyor — seed)'),
+    ('allegro', 12.000, 'Allegro tipik (erişilemiyor — seed)'),
+    ('wish', 15.000, 'Wish tipik (erişilemiyor — seed)'),
+    ('fruugo', 15.000, 'Fruugo tipik (erişilemiyor — seed)'),
+    ('onbuy', 12.000, 'OnBuy tipik (erişilemiyor — seed)'),
+    ('wayfair', 15.000, 'Wayfair tipik (erişilemiyor — seed)'),
+    ('otto', 15.000, 'Otto tipik (erişilemiyor — seed)'),
+    ('temu', 15.000, 'Temu tipik (erişilemiyor — seed)'),
+    ('about-you', 20.000, 'About You tipik (erişilemiyor — seed)'),
+    ('idefix', 15.000, 'Idefix tipik (erişilemiyor — seed)')
 ) AS d(slug, rate, note) ON d.slug = m.slug
 CROSS JOIN categories c;

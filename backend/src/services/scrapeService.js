@@ -1,9 +1,9 @@
 /**
  * Pazaryeri komisyon oranlarını web scraping ile günceller.
  * AI kullanılmaz. Erişim durumuna göre gruplanır:
- *  - scrape_ready  → doğrudan scrape
- *  - auth_required → kimlik doğrulama sonrası scrape
- *  - unavailable   → scrape yok
+ *  - scrape_ready  → kamuya açık sayfa/PDF ile scrape
+ *  - auth_required → kimlik doğrulama sonrası scrape (şimdilik boş olabilir)
+ *  - unavailable   → doğrudan erişilemiyor
  */
 
 const { pool } = require('../db/pool');
@@ -12,22 +12,34 @@ const etsy = require('./scrapers/etsy');
 const shopify = require('./scrapers/shopify');
 const amazon = require('./scrapers/amazon');
 const ebay = require('./scrapers/ebay');
-const trendyol = require('./scrapers/trendyol');
 const hepsiburada = require('./scrapers/hepsiburada');
+const ciceksepeti = require('./scrapers/ciceksepeti');
+const n11 = require('./scrapers/n11');
+const pazarama = require('./scrapers/pazarama');
+const bol = require('./scrapers/bol');
+const kaufland = require('./scrapers/kaufland');
+const walmart = require('./scrapers/walmart');
+const ozon = require('./scrapers/ozon');
 
 const SCRAPERS = {
   etsy,
   shopify,
   amazon,
   ebay,
-  trendyol,
   hepsiburada,
+  ciceksepeti,
+  n11,
+  pazarama,
+  bol,
+  kaufland,
+  walmart,
+  ozon,
 };
 
 const GROUP_LABELS = {
   scrape_ready: 'Doğrudan güncellenebilir',
   auth_required: 'Giriş sonrası scraping',
-  unavailable: 'Güncellenemiyor',
+  unavailable: 'Doğrudan erişilemiyor',
 };
 
 async function getMarketplaceBySlug(slug) {
@@ -65,7 +77,6 @@ async function applyRateUpdates(marketplaceId, rates, sourcePrefix) {
     const applyToAll = item.applyToAll === true;
 
     if (applyToAll) {
-      // Sabit ücretli kanallar (Etsy/Shopify): tüm kategori satırlarını güncelle
       const result = await pool.query(
         `
         UPDATE commission_rates
@@ -123,7 +134,7 @@ async function scrapeMarketplace(slug, options = {}) {
   if (market.update_status === 'unavailable') {
     const message =
       market.scrape_notes ||
-      'Bu pazaryerine web scraping ile erişilemiyor; oranlar manuel güncellenmeli.';
+      'Bu pazaryerine web scraping ile doğrudan erişilemiyor; oranlar manuel güncellenmeli.';
     await markScrapeResult(market.id, false, message);
     return {
       ok: false,
@@ -193,8 +204,6 @@ async function scrapeMarketplace(slug, options = {}) {
     });
 
     if (!result.ok) {
-      // Auth scraper başarısızsa auth_status=failed; scrape_ready başarısızsa unavailable'a çekme
-      // (geçici ağ hatası olabilir). Sadece kalıcı erişim engeli işaretlenirse unavailable.
       if (result.permanentBlock) {
         await pool.query(
           `
@@ -310,7 +319,7 @@ async function listGroupedMarketplaces() {
       key: 'scrape_ready',
       label: GROUP_LABELS.scrape_ready,
       description:
-        'Web scraping ile doğrudan erişilebilenler. Şu an yalnızca bu grup güncellenir.',
+        'Kamuya açık ücret sayfası / PDF ile scraping yapılabilenler. Toplu güncelleme bu grubu tarar.',
       items: [],
     },
     auth_required: {
@@ -323,7 +332,8 @@ async function listGroupedMarketplaces() {
     unavailable: {
       key: 'unavailable',
       label: GROUP_LABELS.unavailable,
-      description: 'Scraping ile erişilemeyenler. Şimdilik sadece gruplanır; manuel kalır.',
+      description:
+        'Kamuya açık komisyon kaynağı yok veya engelli (Trendyol, Otto, Temu, About You, Wayfair, Idefix vb.). Manuel kalır.',
       items: [],
     },
   };
@@ -351,7 +361,6 @@ async function listGroupedMarketplaces() {
 
 /**
  * Sadece scrape_ready olanları güncelle.
- * auth_required / unavailable şimdilik sadece gruplanır, iş yapılmaz.
  */
 async function scrapeAllEligible() {
   const grouped = await listGroupedMarketplaces();
@@ -377,7 +386,7 @@ async function scrapeAllEligible() {
       unavailable: skippedUnavailable.map((m) => ({
         slug: m.slug,
         name: m.name,
-        reason: m.scrape_notes || 'Scraping ile erişilemiyor — şimdilik güncellenmez.',
+        reason: m.scrape_notes || 'Doğrudan erişilemiyor — şimdilik güncellenmez.',
       })),
     },
     summary: {
